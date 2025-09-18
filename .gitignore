@@ -8,7 +8,6 @@
 .github/instructions/nx.instructions.md
 .env
 node_modules
-dist
 tmp
 out
 build
