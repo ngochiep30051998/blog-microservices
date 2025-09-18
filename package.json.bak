@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "@nrwl/nest": "^19.8.4",
+    "@nrwl/node": "^19.8.4",
+    "@nrwl/workspace": "^19.8.4"
+  }
+}
