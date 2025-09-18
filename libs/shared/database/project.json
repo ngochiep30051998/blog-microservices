@@ -4,6 +4,17 @@
   "sourceRoot": "libs/shared/database/src",
   "projectType": "library",
   "tags": [],
-  "// targets": "to see all targets run: nx show project database --web",
-  "targets": {}
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/database",
+        "tsConfig": "libs/shared/database/tsconfig.lib.json",
+        "packageJson": "libs/shared/database/package.json",
+        "main": "libs/shared/database/src/index.ts",
+        "assets": ["libs/shared/database/*.md"]
+      }
+    }
+  }
 }
