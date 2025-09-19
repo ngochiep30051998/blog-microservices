@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom, timeout, catchError } from 'rxjs';
+import { firstValueFrom, timeout, catchError, TimeoutError } from 'rxjs';
 import { AxiosResponse, AxiosRequestConfig } from 'axios';
 
 export interface ServiceConfig {
@@ -33,7 +33,7 @@ export class MicroserviceProxyService {
     this.services = new Map([
       ['user', {
         name: 'User Service',
-        url: this.configService.get('USER_SERVICE_URL', 'http://localhost:3001'),
+        url: this.configService.get('USER_SERVICE_URL', 'http://localhost:9001'),
         timeout: this.configService.get('USER_SERVICE_TIMEOUT', this.defaultTimeout),
         retries: this.defaultRetries,
       }],
@@ -84,7 +84,6 @@ export class MicroserviceProxyService {
       headers,
       params,
     };
-
     return this.makeRequest(serviceName, path, options);
   }
 
@@ -184,7 +183,7 @@ export class MicroserviceProxyService {
   ): Promise<AxiosResponse> {
     return firstValueFrom(
       this.httpService.request(config).pipe(
-        timeout(timeoutMs),
+        timeout({ each: timeoutMs }),
         catchError((error) => {
           throw error;
         })
@@ -229,7 +228,7 @@ export class MicroserviceProxyService {
         HttpStatus.SERVICE_UNAVAILABLE,
       );
 
-    } else if (error.name === 'TimeoutError' || error.code === 'ECONNABORTED') {
+    } else if (error instanceof TimeoutError || error.name === 'TimeoutError' || error.code === 'ECONNABORTED') {
       // Request timeout
       this.logger.error(`${serviceName_} request timeout`);
       

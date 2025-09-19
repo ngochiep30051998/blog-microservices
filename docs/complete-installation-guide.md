@@ -704,7 +704,7 @@ npm run docker:up
 npm run start:api-gateway
 
 # In another terminal, test health endpoint
-curl http://localhost:3000/health
+curl http://localhost:9000/health
 ```
 
 ---
@@ -757,8 +757,8 @@ ANALYTICS_PID=$!
 echo "✅ All services started!"
 echo ""
 echo "📊 Services URLs:"
-echo "  - API Gateway: http://localhost:3000"
-echo "  - User Service: http://localhost:3001"
+echo "  - API Gateway: http://localhost:9000"
+echo "  - User Service: http://localhost:9001"
 echo "  - Post Service: http://localhost:3002"
 echo "  - Comment Service: http://localhost:3003"
 echo "  - Notification Service: http://localhost:3004"
@@ -849,8 +849,8 @@ chmod +x scripts/test-setup.sh
 ## 10.3 Test All Endpoints
 ```bash
 # Test all health endpoints
-curl http://localhost:3000/health
-curl http://localhost:3001/health
+curl http://localhost:9000/health
+curl http://localhost:9001/health
 curl http://localhost:3002/health
 curl http://localhost:3003/health
 curl http://localhost:3004/health

@@ -41,7 +41,7 @@ echo "  - Kibana: http://localhost:${KIBANA_PORT}"
 echo "  - MailHog: http://localhost:8025"
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "  - Prometheus: http://localhost:9090"
-    echo "  - Grafana: http://localhost:3001 (admin/grafana_admin_2024)"
+    echo "  - Grafana: http://localhost:9001 (admin/grafana_admin_2024)"
 fi
 echo ""
 echo "🔍 Check service status: docker-compose ps"

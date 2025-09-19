@@ -52,6 +52,7 @@ export class UserController {
     description: 'Email or username already exists' 
   })
   async register(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    console.log('CreateUserDto:--------->', createUserDto);
     return this.userService.create(createUserDto);
   }
 

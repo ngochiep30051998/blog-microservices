@@ -938,7 +938,7 @@ export class MicroserviceProxyService {
     this.services = new Map([
       ['user', {
         name: 'User Service',
-        url: this.configService.get('USER_SERVICE_URL', 'http://localhost:3001'),
+        url: this.configService.get('USER_SERVICE_URL', 'http://localhost:9001'),
         timeout: 10000,
       }],
       ['post', {
@@ -1352,7 +1352,7 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: ['http://localhost:9000', 'http://localhost:9001'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   });
@@ -1386,7 +1386,7 @@ async function bootstrap() {
       },
       'JWT-auth',
     )
-    .addServer('http://localhost:3000', 'Development server')
+    .addServer('http://localhost:9000', 'Development server')
     .build();
   
   const document = SwaggerModule.createDocument(app, config);
@@ -1424,7 +1424,7 @@ EOF
 cat >> .env << 'EOF'
 
 # Service URLs (for API Gateway)
-USER_SERVICE_URL=http://localhost:3001
+USER_SERVICE_URL=http://localhost:9001
 POST_SERVICE_URL=http://localhost:3002
 COMMENT_SERVICE_URL=http://localhost:3003
 NOTIFICATION_SERVICE_URL=http://localhost:3004
@@ -1483,12 +1483,12 @@ sleep 15
 
 # Test health endpoints
 echo "🏥 Testing health endpoints..."
-curl -f http://localhost:3001/users/health || echo "❌ User Service health check failed"
-curl -f http://localhost:3000/health || echo "❌ API Gateway health check failed"
+curl -f http://localhost:9001/users/health || echo "❌ User Service health check failed"
+curl -f http://localhost:9000/health || echo "❌ API Gateway health check failed"
 
 # Test user registration
 echo "👤 Testing user registration..."
-curl -X POST http://localhost:3000/api/users/register \
+curl -X POST http://localhost:9000/api/users/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -1500,7 +1500,7 @@ curl -X POST http://localhost:3000/api/users/register \
 
 echo "🎉 Testing completed!"
 echo "🔍 Check logs above for any errors"
-echo "📖 API Documentation: http://localhost:3000/docs"
+echo "📖 API Documentation: http://localhost:9000/docs"
 
 # Keep services running
 echo "Services are running. Press Ctrl+C to stop..."
@@ -1519,7 +1519,7 @@ chmod +x scripts/test-user-service.sh
 ## 3.4 API Testing Commands
 ```bash
 # Register a new user
-curl -X POST http://localhost:3000/api/users/register \
+curl -X POST http://localhost:9000/api/users/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
@@ -1530,7 +1530,7 @@ curl -X POST http://localhost:3000/api/users/register \
   }'
 
 # Login
-curl -X POST http://localhost:3000/api/users/login \
+curl -X POST http://localhost:9000/api/users/login \
   -H "Content-Type: application/json" \
   -d '{
     "identifier": "john@example.com",
@@ -1538,7 +1538,7 @@ curl -X POST http://localhost:3000/api/users/login \
   }'
 
 # Get profile (replace TOKEN with actual JWT token)
-curl -X GET http://localhost:3000/api/users/profile \
+curl -X GET http://localhost:9000/api/users/profile \
   -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
 ```
 

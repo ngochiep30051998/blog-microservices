@@ -1,6 +1,6 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '@blog/shared/auth';
+import { UserRole } from '../common/enums';
 
 export class UserResponseDto {
   @ApiProperty()

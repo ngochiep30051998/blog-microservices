@@ -492,12 +492,12 @@ sleep 20
 
 # Test functionality
 echo "🧪 Testing API functionality..."
-curl -f http://localhost:3001/users/health && echo " ✅ User Service OK"
-curl -f http://localhost:3000/health && echo " ✅ API Gateway OK"
+curl -f http://localhost:9001/users/health && echo " ✅ User Service OK"
+curl -f http://localhost:9000/health && echo " ✅ API Gateway OK"
 
 # Test user registration
 echo "👤 Testing user registration..."
-curl -X POST http://localhost:3000/api/v1/users/register \
+curl -X POST http://localhost:9000/api/v1/users/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",

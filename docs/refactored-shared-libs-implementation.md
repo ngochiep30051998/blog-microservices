@@ -1516,11 +1516,11 @@ sleep 20
 
 # Test endpoints
 echo "🏥 Testing health endpoints..."
-curl -f http://localhost:3001/users/health && echo " ✅ User Service OK"
-curl -f http://localhost:3000/health && echo " ✅ API Gateway OK"
+curl -f http://localhost:9001/users/health && echo " ✅ User Service OK"
+curl -f http://localhost:9000/health && echo " ✅ API Gateway OK"
 
 echo ""
-echo "📖 API Documentation: http://localhost:3000/docs"
+echo "📖 API Documentation: http://localhost:9000/docs"
 echo "🚀 Services are running!"
 echo "Press Ctrl+C to stop..."
 
@@ -1537,7 +1537,7 @@ cat > scripts/test-api-endpoints.sh << 'EOF'
 
 echo "🧪 Testing API Endpoints..."
 
-API_URL="http://localhost:3000"
+API_URL="http://localhost:9000"
 
 # Test user registration
 echo "👤 Testing user registration..."

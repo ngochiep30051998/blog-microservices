@@ -344,7 +344,7 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: configService.get('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001').split(','),
+    origin: configService.get('CORS_ORIGINS', 'http://localhost:9000,http://localhost:9001').split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
@@ -906,7 +906,7 @@ async function bootstrap() {
 
   // CORS for development
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: ['http://localhost:9000', 'http://localhost:9001'],
     credentials: true,
   });
 
@@ -1137,7 +1137,7 @@ Comprehensive health check of all registered microservices.
                 example: 'healthy'
               },
               name: { type: 'string', example: 'User Service' },
-              url: { type: 'string', example: 'http://localhost:3001' },
+              url: { type: 'string', example: 'http://localhost:9001' },
               responseTime: { 
                 type: 'string', 
                 example: '25ms',
@@ -1214,7 +1214,7 @@ Get a list of all microservices registered with the API Gateway.
                 type: 'object',
                 properties: {
                   name: { type: 'string', example: 'User Service' },
-                  url: { type: 'string', example: 'http://localhost:3001' },
+                  url: { type: 'string', example: 'http://localhost:9001' },
                   timeout: { type: 'number', example: 10000 },
                   retries: { type: 'number', example: 3 }
                 }
@@ -1252,7 +1252,7 @@ SWAGGER_ENABLE=true
 SWAGGER_TITLE="Blog Microservices API"
 SWAGGER_DESCRIPTION="Comprehensive API for blog microservices system"
 SWAGGER_VERSION="1.0.0"
-CORS_ORIGINS="http://localhost:3000,http://localhost:3001,http://localhost:8080"
+CORS_ORIGINS="http://localhost:9000,http://localhost:9001,http://localhost:8080"
 
 # API Documentation
 API_DOCS_URL="/docs"
@@ -1291,8 +1291,8 @@ sleep 20
 # Test Swagger endpoints
 echo "📚 Testing Swagger documentation endpoints..."
 
-API_GATEWAY_URL="http://localhost:3000"
-USER_SERVICE_URL="http://localhost:3001"
+API_GATEWAY_URL="http://localhost:9000"
+USER_SERVICE_URL="http://localhost:9001"
 
 # Test API Gateway Swagger
 echo "Testing API Gateway Swagger..."
@@ -1339,7 +1339,7 @@ cat > scripts/generate-swagger-examples.sh << 'EOF'
 
 echo "📋 Generating Swagger API Examples..."
 
-API_URL="http://localhost:3000"
+API_URL="http://localhost:9000"
 
 # Create example user
 echo "👤 Creating example user..."
@@ -1436,14 +1436,14 @@ nx build utils
 ./scripts/generate-swagger-examples.sh
 
 # 4. Visit documentation
-open http://localhost:3000/docs
+open http://localhost:9000/docs
 ```
 
 ## 📖 Documentation URLs
 
-- **Main API Docs**: http://localhost:3000/docs
-- **User Service Docs**: http://localhost:3001/docs  
-- **OpenAPI JSON**: http://localhost:3000/docs-json
-- **Health Monitoring**: http://localhost:3000/health/services
+- **Main API Docs**: http://localhost:9000/docs
+- **User Service Docs**: http://localhost:9001/docs  
+- **OpenAPI JSON**: http://localhost:9000/docs-json
+- **Health Monitoring**: http://localhost:9000/health/services
 
 **Swagger documentation setup hoàn chỉnh!** 🎉

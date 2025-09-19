@@ -3,10 +3,9 @@ import { SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
-import * as compression from 'compression';
 import { AppModule } from './app/app.module';
 import { SwaggerConfigBuilder } from '@blog/shared/utils';
-
+var compression = require('compression')
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
@@ -29,7 +28,7 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: configService.get('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001').split(','),
+    origin: configService.get('CORS_ORIGINS', 'http://localhost:9000,http://localhost:9001').split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
@@ -100,7 +99,7 @@ API calls are rate limited to prevent abuse:
 - 💻 GitHub: [Repository](https://github.com/your-org/blog-microservices)
     `,
     version: '1.0.0',
-    serverUrl: `http://localhost:${configService.get('API_GATEWAY_PORT', 3000)}`,
+    serverUrl: `http://localhost:${configService.get('API_GATEWAY_PORT', 9000)}`,
     serverDescription: 'Development Server',
   });
 
@@ -116,7 +115,7 @@ API calls are rate limited to prevent abuse:
     yamlDocumentUrl: '/docs-yaml',
   });
 
-  const port = configService.get('API_GATEWAY_PORT', 3000);
+  const port = configService.get('API_GATEWAY_PORT', 9000);
   await app.listen(port);
   
   console.log(`🚀 API Gateway running on port ${port}`);
