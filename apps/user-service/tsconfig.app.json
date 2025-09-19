@@ -8,5 +8,5 @@
     "emitDecoratorMetadata": true,
     "target": "es2021"
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "../../libs/shared/dto/src/lib/user/update-user.dto.ts", "../../libs/shared/dto/src/lib/user/login.dto.ts", "../../libs/shared/dto/src/lib/user/user-response.dto.ts"]
 }

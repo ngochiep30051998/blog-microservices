@@ -10,7 +10,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   override handleRequest(err: any, user: any, info: any) {
     if (err || !user) {
-      throw err || new UnauthorizedException('Access denied');
+      throw err || new UnauthorizedException('Access denied - Invalid or missing token');
     }
     return user;
   }

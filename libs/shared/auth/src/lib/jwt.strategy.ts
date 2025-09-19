@@ -12,6 +12,13 @@ export interface JwtPayload {
   exp?: number;
 }
 
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  username: string;
+  role: string;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
@@ -22,11 +29,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     if (!payload.sub) {
       throw new UnauthorizedException('Invalid token payload');
     }
     
+    // REMOVED: No user service validation here
+    // JWT validation is sufficient for auth library
     return {
       id: payload.sub,
       email: payload.email,
