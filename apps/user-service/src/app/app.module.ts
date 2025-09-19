@@ -21,11 +21,11 @@ import { EnhancedJwtStrategy } from '../auth/enhanced-jwt.strategy'; // Enhanced
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('POSTGRES_HOST', 'localhost'),
-        port: configService.get('POSTGRES_PORT', 5432),
-        username: configService.get('POSTGRES_USER', 'blog_user'),
-        password: configService.get('POSTGRES_PASSWORD', 'blog_password_2024'),
-        database: configService.get('POSTGRES_DB', 'blog_db'),
+        host: configService.get('POSTGRES_HOST'),
+        port: configService.get('POSTGRES_PORT'),
+        username: configService.get('POSTGRES_USER'),
+        password: configService.get('POSTGRES_PASSWORD'),
+        database: configService.get('POSTGRES_DB'),
         entities: [User],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
