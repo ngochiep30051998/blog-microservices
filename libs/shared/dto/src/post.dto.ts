@@ -64,11 +64,11 @@ class GalleryImageDto {
   @ApiProperty()
   @IsString()
   @IsUrl()
-  url: string;
+  url!: string;
 
   @ApiProperty()
   @IsString()
-  alt: string;
+  alt!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -91,17 +91,17 @@ export class CreatePostDto {
   @IsString()
   @MinLength(1)
   @MaxLength(255)
-  title: string;
+  title!: string;
 
   @ApiProperty({ description: 'Post description/summary', example: 'A comprehensive guide to building applications with NestJS' })
   @IsString()
   @MinLength(1)
-  description: string;
+  description!: string;
 
   @ApiProperty({ description: 'Post content', example: '# Introduction\n\nNestJS is a powerful framework...' })
   @IsString()
   @MinLength(1)
-  content: string;
+  content!: string;
 
   @ApiPropertyOptional({ enum: ContentType, default: ContentType.MARKDOWN })
   @IsOptional()

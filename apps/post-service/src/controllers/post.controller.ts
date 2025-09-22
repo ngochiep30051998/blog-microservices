@@ -9,12 +9,8 @@ import {
   Query,
   UseGuards,
   Request,
-  UseInterceptors,
-  UploadedFile,
-  UploadedFiles,
   HttpCode,
   HttpStatus,
-  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,9 +18,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
-  ApiConsumes,
 } from '@nestjs/swagger';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 // Shared imports
 import { JwtAuthGuard } from '@blog/shared/auth';
@@ -41,12 +35,10 @@ import {
   ApiUpdatedResponse,
   ApiDeletedResponse,
   ApiPaginatedResponse,
-  ApiSuccessMessageResponse,
 } from '@blog/shared/dto';
 
 // Local imports
 import { PostService } from '../services/post.service';
-import { CloudinaryService } from '../services/cloudinary.service';
 import { PostStatus } from '../entities/post.entity';
 
 @ApiTags('Posts')
@@ -54,7 +46,6 @@ import { PostStatus } from '../entities/post.entity';
 export class PostController {
   constructor(
     private readonly postService: PostService,
-    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   @Post()
@@ -74,6 +65,9 @@ Create a new blog post with rich content and media.
 - Automatic content analysis (reading time, word count)
 - Social media metadata
 - Scheduling support
+
+**Note:** File uploads (images, thumbnails, gallery) are now handled by the Upload Service.
+Use the Upload Service endpoints first, then reference the file URLs in your post content.
 
 **Content Types:**
 - \`markdown\` - Markdown formatted content
@@ -101,6 +95,7 @@ Create a new blog post with rich content and media.
       isDraft: post.status === PostStatus.DRAFT,
       isPublished: post.status === PostStatus.PUBLISHED,
       autoAnalyzed: true,
+      uploadServiceNote: 'Use Upload Service for file uploads',
     });
   }
 
@@ -200,7 +195,9 @@ Retrieve paginated list of posts with advanced filtering options.
     description: 'Get comprehensive post and engagement statistics'
   })
   @ApiSuccessResponse(Object, 'Statistics retrieved successfully')
-  async getStats(@Request() req): Promise<SuccessResponseDto<any>> {
+  async getStats(
+    @Request() req
+  ): Promise<SuccessResponseDto<any>> {
     const isAdmin = req.user.role === 'admin';
     const authorId = isAdmin ? undefined : req.user.id;
     
@@ -214,6 +211,31 @@ Retrieve paginated list of posts with advanced filtering options.
         scope: isAdmin ? 'global' : 'user',
         authorId: authorId || 'all'
       }
+    );
+  }
+
+  @Get('search')
+  @ApiOperation({ 
+    summary: 'Full-text search posts',
+    description: 'Search posts using full-text search across title, content, and tags'
+  })
+  @ApiQuery({ name: 'q', description: 'Search query', type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiPaginatedResponse(PostListItemDto, 'Search results retrieved successfully')
+  async search(
+    @Query('q') query: string,
+    @Query() paginationDto: PaginationDto
+  ): Promise<SuccessResponseDto<any>> {
+    const filters = { search: query };
+    const result = await this.postService.findAll(paginationDto, filters);
+    
+    return ResponseBuilder.paginated(
+      result.items,
+      result.page,
+      result.limit,
+      result.total,
+      `Found ${result.total} posts matching "${query}"`
     );
   }
 
@@ -249,56 +271,40 @@ Retrieve paginated list of posts with advanced filtering options.
     );
   }
 
-  @Get(':id')
+    @Get(':id')
   @ApiOperation({ 
     summary: 'Get post by ID',
-    description: 'Retrieve a specific post by its ID with full details'
+    description: 'Retrieve a single post by ID with all details and related data'
   })
-  @ApiParam({ name: 'id', type: 'string', description: 'Post UUID' })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
   @ApiSuccessResponse(PostResponseDto, 'Post retrieved successfully')
-  async findOne(@Param('id') id: string): Promise<SuccessResponseDto<PostResponseDto>> {
+  async findOne(
+    @Param('id') id: string
+  ): Promise<SuccessResponseDto<PostResponseDto>> {
     const post = await this.postService.findOne(id);
     
-    return ResponseBuilder.success(post, 'Post retrieved successfully');
+    return ResponseBuilder.success(post, 'Post retrieved successfully', HttpStatus.OK, {
+      views: post.viewCount,
+      likes: post.likeCount,
+      comments: post.commentCount,
+    });
   }
 
-  @Get('slug/:slug')
+  @Get(':slug/by-slug')
   @ApiOperation({ 
     summary: 'Get post by slug',
-    description: `
-Get a published post by its slug for public viewing.
-
-**Features:**
-- Only returns published posts
-- Checks publication date for scheduled posts
-- Records post view for analytics
-- Returns 404 for private/draft posts
-
-**Use Case:**
-- Public blog post display
-- SEO-friendly URLs
-- Social media sharing
-    `
+    description: 'Retrieve a single post by its SEO-friendly slug'
   })
-  @ApiParam({ name: 'slug', type: 'string', description: 'Post slug' })
+  @ApiParam({ name: 'slug', description: 'Post slug' })
   @ApiSuccessResponse(PostResponseDto, 'Post retrieved successfully')
   async findBySlug(
-    @Param('slug') slug: string,
-    @Request() req
+    @Param('slug') slug: string
   ): Promise<SuccessResponseDto<PostResponseDto>> {
     const post = await this.postService.findBySlug(slug);
     
-    // Record view (async, don't wait)
-    this.postService.recordView(
-      post.id,
-      req.user?.id,
-      req.ip,
-      req.headers['user-agent']
-    ).catch(() => {}); // Ignore view recording errors
-    
     return ResponseBuilder.success(post, 'Post retrieved successfully', HttpStatus.OK, {
-      viewRecorded: true,
-      publicAccess: true,
+      accessMethod: 'slug',
+      views: post.viewCount,
     });
   }
 
@@ -329,74 +335,123 @@ Get a published post by its slug for public viewing.
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ 
     summary: 'Update post',
-    description: `
-Update a post. Users can only update their own posts unless they're admin.
-
-**Features:**
-- Automatic content re-analysis if content changed
-- Slug uniqueness validation
-- Category validation
-- Publication status management
-- Audit trail (lastEditedAt, lastEditedBy)
-
-**Permissions:**
-- Authors can edit their own posts
-- Admins can edit any post
-    `
+    description: 'Update an existing post. Only the author or admin can update.'
   })
-  @ApiParam({ name: 'id', type: 'string', description: 'Post UUID' })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
   @ApiUpdatedResponse(PostResponseDto, 'Post updated successfully')
   async update(
     @Param('id') id: string,
     @Body() updatePostDto: UpdatePostDto,
     @Request() req
   ): Promise<SuccessResponseDto<PostResponseDto>> {
-    const post = await this.postService.update(
-      id,
-      updatePostDto,
-      req.user.id,
-      req.user.role
-    );
+    const post = await this.postService.update(id, updatePostDto, req.user.id, req.user.role);
     
     return ResponseBuilder.updated(post, 'Post updated successfully', {
-      contentReanalyzed: !!updatePostDto.content,
-      lastEditedBy: req.user.id,
+      updatedBy: req.user.id,
+      version: post.version,
+      lastEditedAt: post.lastEditedAt,
     });
   }
 
-  @Patch(':id/toggle-publish')
+  @Post(':id/publish')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
-    summary: 'Toggle post publish status',
-    description: 'Publish or unpublish a post. Sets publication date automatically.'
+    summary: 'Publish draft post',
+    description: 'Change post status from draft to published'
   })
-  @ApiParam({ name: 'id', type: 'string', description: 'Post UUID' })
-  @ApiUpdatedResponse(PostResponseDto, 'Post publication status updated')
-  async togglePublish(
+  @ApiParam({ name: 'id', description: 'Post UUID' })
+  @ApiSuccessResponse(PostResponseDto, 'Post published successfully')
+  async publish(
     @Param('id') id: string,
     @Request() req
   ): Promise<SuccessResponseDto<PostResponseDto>> {
     const post = await this.postService.togglePublish(id, req.user.id, req.user.role);
     
-    const message = post.status === PostStatus.PUBLISHED 
-      ? 'Post published successfully' 
-      : 'Post unpublished successfully';
+    if (post.status !== PostStatus.PUBLISHED) {
+      // If not published after toggle, call toggle again
+      const publishedPost = await this.postService.togglePublish(id, req.user.id, req.user.role);
+      return ResponseBuilder.success(publishedPost, 'Post published successfully', HttpStatus.OK, {
+        publishedBy: req.user.id,
+        publishedAt: publishedPost.publishedAt,
+        wasScheduled: !!publishedPost.scheduledAt,
+      });
+    }
     
-    return ResponseBuilder.updated(post, message, {
-      newStatus: post.status,
+    return ResponseBuilder.success(post, 'Post published successfully', HttpStatus.OK, {
+      publishedBy: req.user.id,
       publishedAt: post.publishedAt,
+      wasScheduled: !!post.scheduledAt,
     });
+  }
+
+  @Post(':id/unpublish')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Unpublish post',
+    description: 'Change post status from published back to draft'
+  })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
+  @ApiSuccessResponse(PostResponseDto, 'Post unpublished successfully')
+  async unpublish(
+    @Param('id') id: string,
+    @Request() req
+  ): Promise<SuccessResponseDto<PostResponseDto>> {
+    // Use togglePublish to unpublish (change from published to draft)
+    const post = await this.postService.togglePublish(id, req.user.id, req.user.role);
+    
+    return ResponseBuilder.success(post, 'Post unpublished successfully', HttpStatus.OK, {
+      unpublishedBy: req.user.id,
+      previousStatus: PostStatus.PUBLISHED,
+    });
+  }
+
+  @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Like/unlike post',
+    description: 'Toggle like status for a post'
+  })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
+  @ApiSuccessResponse(Object, 'Post like status updated')
+  async toggleLike(
+    @Param('id') id: string,
+    @Request() req
+  ): Promise<SuccessResponseDto<{ liked: boolean; likeCount: number }>> {
+    // For now, return a placeholder since we don't have like functionality yet
+    // This would need to be implemented in PostService and database
+    const post = await this.postService.findOne(id);
+    
+    const result = {
+      liked: false, // Placeholder - would need user-specific like tracking
+      likeCount: post.likeCount
+    };
+    
+    return ResponseBuilder.success(
+      result,
+      'Like functionality not yet implemented',
+      HttpStatus.OK,
+      { 
+        userId: req.user.id,
+        note: 'This endpoint will be implemented with user-specific like tracking'
+      }
+    );
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ 
     summary: 'Delete post',
-    description: 'Soft delete a post. Users can only delete their own posts unless they are admin.'
+    description: 'Soft delete a post. Only the author or admin can delete.'
   })
-  @ApiParam({ name: 'id', type: 'string', description: 'Post UUID' })
+  @ApiParam({ name: 'id', description: 'Post UUID' })
   @ApiDeletedResponse('Post deleted successfully')
   async remove(
     @Param('id') id: string,
@@ -407,142 +462,7 @@ Update a post. Users can only update their own posts unless they're admin.
     return ResponseBuilder.deleted('Post deleted successfully', {
       deletedBy: req.user.id,
       type: 'soft_delete',
+      note: 'Associated uploaded files are managed by Upload Service',
     });
-  }
-
-  // Image Upload Endpoints
-
-  @Post('upload/thumbnail')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ 
-    summary: 'Upload post thumbnail',
-    description: `
-Upload and optimize a thumbnail image for a post.
-
-**Optimizations Applied:**
-- Resized to 800x450 pixels
-- WebP format for better compression
-- Auto quality optimization
-- CDN delivery via Cloudinary
-
-**File Requirements:**
-- Max file size: 5MB
-- Supported formats: JPEG, PNG, WebP
-- Recommended dimensions: 16:9 aspect ratio
-    `
-  })
-  @ApiSuccessResponse(Object, 'Thumbnail uploaded successfully')
-  async uploadThumbnail(
-    @UploadedFile() file: any
-  ): Promise<SuccessResponseDto<any>> {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-
-    const result = await this.cloudinaryService.uploadThumbnail(file);
-    
-    return ResponseBuilder.success({
-      url: result.secureUrl,
-      publicId: result.publicId,
-      width: result.width,
-      height: result.height,
-      format: result.format,
-      bytes: result.bytes,
-    }, 'Thumbnail uploaded successfully', HttpStatus.CREATED);
-  }
-
-  @Post('upload/featured')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ 
-    summary: 'Upload featured image',
-    description: 'Upload and optimize a featured image for a post (1200x630 for social sharing)'
-  })
-  @ApiSuccessResponse(Object, 'Featured image uploaded successfully')
-  async uploadFeaturedImage(
-    @UploadedFile() file: any
-  ): Promise<SuccessResponseDto<any>> {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-
-    const result = await this.cloudinaryService.uploadFeaturedImage(file);
-    
-    return ResponseBuilder.success({
-      url: result.secureUrl,
-      publicId: result.publicId,
-      width: result.width,
-      height: result.height,
-    }, 'Featured image uploaded successfully', HttpStatus.CREATED);
-  }
-
-  @Post('upload/content')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ 
-    summary: 'Upload content image',
-    description: 'Upload image for use within post content (rich text editor)'
-  })
-  @ApiSuccessResponse(Object, 'Content image uploaded successfully')
-  async uploadContentImage(
-    @UploadedFile() file: any
-  ): Promise<SuccessResponseDto<any>> {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-
-    const result = await this.cloudinaryService.uploadContentImage(file);
-    
-    return ResponseBuilder.success({
-      url: result.secureUrl,
-      publicId: result.publicId,
-      width: result.width,
-      height: result.height,
-      responsive: this.cloudinaryService.generateResponsiveUrls(result.publicId),
-    }, 'Content image uploaded successfully', HttpStatus.CREATED);
-  }
-
-  @Post('upload/gallery')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FilesInterceptor('files', 10)) // Max 10 files
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ 
-    summary: 'Upload gallery images',
-    description: 'Upload multiple images for post gallery (max 10 files)'
-  })
-  @ApiSuccessResponse(Object, 'Gallery images uploaded successfully')
-  async uploadGalleryImages(
-    @UploadedFiles() files: any[]
-  ): Promise<SuccessResponseDto<any[]>> {
-    if (!files || files.length === 0) {
-      throw new BadRequestException('No files uploaded');
-    }
-
-    const results = await Promise.all(
-      files.map(file => this.cloudinaryService.uploadGalleryImage(file))
-    );
-    
-    const galleryData = results.map(result => ({
-      url: result.secureUrl,
-      publicId: result.publicId,
-      width: result.width,
-      height: result.height,
-      alt: '', // To be filled by user
-      caption: '', // To be filled by user
-    }));
-    
-    return ResponseBuilder.success(
-      galleryData,
-      `${files.length} gallery images uploaded successfully`,
-      HttpStatus.CREATED
-    );
   }
 }

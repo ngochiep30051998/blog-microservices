@@ -10,6 +10,10 @@ export * from './lib/user/auth-response.dto';
 export * from './post.dto';
 export * from './category.dto';
 
+// Upload DTOs
+export * from './upload.dto';
+export { FileType, UploadStatus } from './upload.dto';
+
 // Common DTOs
 export * from './lib/common/pagination.dto';
 // Export enums individually to avoid conflicts
