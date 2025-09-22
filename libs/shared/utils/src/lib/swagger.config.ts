@@ -41,12 +41,6 @@ export class SwaggerConfigBuilder {
       .addTag('Notifications', 'Notification services')
       .addTag('Analytics', 'Analytics and reporting')
       .addTag('Health', 'Health check endpoints')
-      .setContact(
-        'Blog Microservices API',
-        'https://github.com/your-org/blog-microservices',
-        'support@yourdomain.com'
-      )
-      .setLicense('MIT', 'https://opensource.org/licenses/MIT')
       .setExternalDoc('Postman Collection', '/api/docs-json');
 
     if (config.serverUrl) {

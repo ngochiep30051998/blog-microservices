@@ -33,19 +33,14 @@ import {
   UserResponseDto,
   AuthResponseDto,
   PaginationDto,
-} from '@blog/shared/dto';
-import {
-  ApiAuthenticatedOperation,
+  SuccessResponseDto,
+  ApiSuccessResponse,
   ApiCreatedResponse,
-  ApiOkResponse,
+  ApiUpdatedResponse,
+  ApiDeletedResponse,
   ApiPaginatedResponse,
-  ApiValidationErrorResponse,
-  ApiUnauthorizedResponse,
-  ApiConflictResponse,
-  ApiNotFoundResponse,
-  ApiForbiddenResponse,
-  ApiInternalServerErrorResponse,
-} from '@blog/shared/utils';
+  ApiSuccessMessageResponse,
+} from '@blog/shared/dto';
 
 // Local imports
 import { MicroserviceProxyService } from '../services/microservice-proxy.service';
@@ -79,10 +74,7 @@ Create a new user account with email and username validation.
   })
   @ApiBody({ type: CreateUserDto })
   @ApiCreatedResponse(UserResponseDto, 'User account created successfully')
-  @ApiValidationErrorResponse()
-  @ApiConflictResponse()
-  @ApiInternalServerErrorResponse()
-  async register(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
+  async register(@Body() createUserDto: CreateUserDto): Promise<SuccessResponseDto<UserResponseDto>> {
     return this.proxyService.proxyRequest(
       'user', 
       '/users/register', 
@@ -115,11 +107,8 @@ Authenticate user with email/username and password.
     `
   })
   @ApiBody({ type: LoginDto })
-  @ApiOkResponse(AuthResponseDto, 'Login successful')
-  @ApiValidationErrorResponse()
-  @ApiUnauthorizedResponse()
-  @ApiInternalServerErrorResponse()
-  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+  @ApiSuccessResponse(AuthResponseDto, 'Login successful')
+  async login(@Body() loginDto: LoginDto): Promise<SuccessResponseDto<AuthResponseDto>> {
     return this.proxyService.proxyRequest(
       'user', 
       '/users/login', 
@@ -130,10 +119,11 @@ Authenticate user with email/username and password.
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @ApiAuthenticatedOperation(
-    'Get all users (Admin only)',
-    'Retrieve paginated list of all users in the system. Requires admin privileges.'
-  )
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ 
+    summary: 'Get all users (Admin only)',
+    description: 'Retrieve paginated list of all users in the system. Requires admin privileges.'
+  })
   @ApiQuery({ 
     name: 'page', 
     required: false, 
@@ -168,16 +158,13 @@ Authenticate user with email/username and password.
     description: 'Filter by account status'
   })
   @ApiPaginatedResponse(UserResponseDto)
-  @ApiUnauthorizedResponse()
-  @ApiForbiddenResponse()
-  @ApiInternalServerErrorResponse()
   async findAll(
     @Query() paginationDto: PaginationDto,
     @Query('search') search?: string,
     @Query('role') role?: string,
     @Query('isActive') isActive?: boolean,
     @Headers('authorization') auth?: string
-  ) {
+  ): Promise<SuccessResponseDto<any>> {
     const queryParams = {
       ...paginationDto,
       ...(search && { search }),
@@ -197,14 +184,13 @@ Authenticate user with email/username and password.
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiAuthenticatedOperation(
-    'Get current user profile',
-    'Retrieve the authenticated user\'s profile information.'
-  )
-  @ApiOkResponse(UserResponseDto, 'Profile retrieved successfully')
-  @ApiUnauthorizedResponse()
-  @ApiInternalServerErrorResponse()
-  async getProfile(@Headers('authorization') auth: string): Promise<UserResponseDto> {
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ 
+    summary: 'Get current user profile',
+    description: 'Retrieve the authenticated user\'s profile information.'
+  })
+  @ApiSuccessResponse(UserResponseDto, 'Profile retrieved successfully')
+  async getProfile(@Headers('authorization') auth: string): Promise<SuccessResponseDto<UserResponseDto>> {
     return this.proxyService.proxyRequest(
       'user', 
       '/users/profile', 
@@ -216,24 +202,22 @@ Authenticate user with email/username and password.
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiAuthenticatedOperation(
-    'Get user by ID',
-    'Retrieve a specific user\'s public profile information by their ID.'
-  )
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ 
+    summary: 'Get user by ID',
+    description: 'Retrieve a specific user\'s public profile information by their ID.'
+  })
   @ApiParam({ 
     name: 'id', 
     type: 'string', 
     description: 'User UUID',
     example: '123e4567-e89b-12d3-a456-426614174000'
   })
-  @ApiOkResponse(UserResponseDto, 'User found')
-  @ApiUnauthorizedResponse()
-  @ApiNotFoundResponse()
-  @ApiInternalServerErrorResponse()
+  @ApiSuccessResponse(UserResponseDto, 'User found')
   async findOne(
     @Param('id') id: string, 
     @Headers('authorization') auth: string
-  ): Promise<UserResponseDto> {
+  ): Promise<SuccessResponseDto<UserResponseDto>> {
     return this.proxyService.proxyRequest(
       'user', 
       `/users/${id}`, 
@@ -245,9 +229,10 @@ Authenticate user with email/username and password.
 
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiAuthenticatedOperation(
-    'Update current user profile',
-    `
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ 
+    summary: 'Update current user profile',
+    description: `
 Update the authenticated user's profile information.
 
 **Updatable Fields:**
@@ -261,17 +246,13 @@ Update the authenticated user's profile information.
 - Cannot change password (use change-password endpoint)
 - Cannot change role (admin only)
     `
-  )
+  })
   @ApiBody({ type: UpdateUserDto })
-  @ApiOkResponse(UserResponseDto, 'Profile updated successfully')
-  @ApiValidationErrorResponse()
-  @ApiUnauthorizedResponse()
-  @ApiConflictResponse()
-  @ApiInternalServerErrorResponse()
+  @ApiUpdatedResponse(UserResponseDto, 'Profile updated successfully')
   async updateProfile(
     @Body() updateUserDto: UpdateUserDto, 
     @Headers('authorization') auth: string
-  ): Promise<UserResponseDto> {
+  ): Promise<SuccessResponseDto<UserResponseDto>> {
     return this.proxyService.proxyRequest(
       'user', 
       '/users/profile', 
@@ -283,9 +264,10 @@ Update the authenticated user's profile information.
 
   @Patch('profile/change-password')
   @UseGuards(JwtAuthGuard)
-  @ApiAuthenticatedOperation(
-    'Change user password',
-    `
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ 
+    summary: 'Change user password',
+    description: `
 Change the authenticated user's password.
 
 **Requirements:**
@@ -298,37 +280,13 @@ Change the authenticated user's password.
 - Requires current password confirmation
 - Invalidates existing JWT tokens (optional)
     `
-  )
+  })
   @ApiBody({ type: ChangePasswordDto })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Password changed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Password changed successfully' }
-      }
-    }
-  })
-  @ApiValidationErrorResponse()
-  @ApiUnauthorizedResponse()
-  @ApiResponse({
-    status: 400,
-    description: 'Current password is incorrect',
-    schema: {
-      type: 'object',
-      properties: {
-        statusCode: { type: 'number', example: 400 },
-        message: { type: 'string', example: 'Current password is incorrect' },
-        error: { type: 'string', example: 'Bad Request' }
-      }
-    }
-  })
-  @ApiInternalServerErrorResponse()
+  @ApiSuccessMessageResponse('Password changed successfully')
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto, 
     @Headers('authorization') auth: string
-  ) {
+  ): Promise<SuccessResponseDto<null>> {
     return this.proxyService.proxyRequest(
       'user', 
       '/users/profile/change-password', 
@@ -340,10 +298,11 @@ Change the authenticated user's password.
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiAuthenticatedOperation(
-    'Update user by ID (Admin only)',
-    'Update any user\'s information. Requires admin privileges.'
-  )
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ 
+    summary: 'Update user by ID (Admin only)',
+    description: 'Update any user\'s information. Requires admin privileges.'
+  })
   @ApiParam({ 
     name: 'id', 
     type: 'string', 
@@ -351,18 +310,12 @@ Change the authenticated user's password.
     example: '123e4567-e89b-12d3-a456-426614174000'
   })
   @ApiBody({ type: UpdateUserDto })
-  @ApiOkResponse(UserResponseDto, 'User updated successfully')
-  @ApiValidationErrorResponse()
-  @ApiUnauthorizedResponse()
-  @ApiForbiddenResponse()
-  @ApiNotFoundResponse()
-  @ApiConflictResponse()
-  @ApiInternalServerErrorResponse()
+  @ApiUpdatedResponse(UserResponseDto, 'User updated successfully')
   async update(
     @Param('id') id: string, 
     @Body() updateUserDto: UpdateUserDto, 
     @Headers('authorization') auth: string
-  ): Promise<UserResponseDto> {
+  ): Promise<SuccessResponseDto<UserResponseDto>> {
     return this.proxyService.proxyRequest(
       'user', 
       `/users/${id}`, 
@@ -374,9 +327,10 @@ Change the authenticated user's password.
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiAuthenticatedOperation(
-    'Delete user (Admin only)',
-    `
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ 
+    summary: 'Delete user (Admin only)',
+    description: `
 Permanently delete a user account. Requires admin privileges.
 
 **Warning:** This action is irreversible and will:
@@ -387,31 +341,18 @@ Permanently delete a user account. Requires admin privileges.
 
 **Alternative:** Consider deactivating the account instead.
     `
-  )
+  })
   @ApiParam({ 
     name: 'id', 
     type: 'string', 
     description: 'User UUID',
     example: '123e4567-e89b-12d3-a456-426614174000'
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'User deleted successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'User deleted successfully' }
-      }
-    }
-  })
-  @ApiUnauthorizedResponse()
-  @ApiForbiddenResponse()
-  @ApiNotFoundResponse()
-  @ApiInternalServerErrorResponse()
+  @ApiDeletedResponse('User deleted successfully')
   async remove(
     @Param('id') id: string, 
     @Headers('authorization') auth: string
-  ) {
+  ): Promise<SuccessResponseDto<null>> {
     return this.proxyService.proxyRequest(
       'user', 
       `/users/${id}`, 

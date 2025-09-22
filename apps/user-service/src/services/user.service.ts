@@ -14,11 +14,19 @@ import {
   ChangePasswordDto,
   UserResponseDto,
   AuthResponseDto,
-  PaginatedResponseDto
+  PaginationDto
 } from '@blog/shared/dto';
 
 // Local imports
 import { User } from '../entities/user.entity';
+
+// Interface for paginated results
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 @Injectable()
 export class UserService {
@@ -115,23 +123,33 @@ export class UserService {
     };
   }
 
-  async findAll(page: number = 1, limit: number = 10): Promise<PaginatedResponseDto<UserResponseDto>> {
-    const [users, total] = await this.userRepository.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' },
-    });
+  async findAll(
+    paginationDto: PaginationDto,
+    search?: string
+  ): Promise<PaginatedResult<UserResponseDto>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
 
-    const totalPages = Math.ceil(total / limit);
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    if (search) {
+      queryBuilder.where(
+        'user.username ILIKE :search OR user.email ILIKE :search OR user.firstName ILIKE :search OR user.lastName ILIKE :search',
+        { search: `%${search}%` }
+      );
+    }
+
+    const [users, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .orderBy('user.createdAt', 'DESC')
+      .getManyAndCount();
 
     return {
       items: users.map(user => this.toResponseDto(user)),
       total,
       page,
       limit,
-      totalPages,
-      hasNext: page < totalPages,
-      hasPrevious: page > 1,
     };
   }
 
