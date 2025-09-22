@@ -503,7 +503,7 @@ export class UserController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ 
     summary: 'Get all users with pagination',
     description: 'Retrieve paginated list of users. Admin access required.'
@@ -530,7 +530,7 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ 
     summary: 'Get current user profile',
     description: 'Retrieve the authenticated user profile information'
@@ -546,7 +546,7 @@ export class UserController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ 
     summary: 'Get user by ID',
     description: 'Retrieve a specific user by their ID'
@@ -561,7 +561,7 @@ export class UserController {
 
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ 
     summary: 'Update user profile',
     description: 'Update the authenticated user profile information'
@@ -581,7 +581,7 @@ export class UserController {
 
   @Patch('profile/change-password')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ 
     summary: 'Change user password',
     description: 'Change the authenticated user password'
@@ -601,7 +601,7 @@ export class UserController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ 
     summary: 'Update user by ID (Admin only)',
     description: 'Update any user information. Requires admin privileges.'
@@ -623,7 +623,7 @@ export class UserController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ 
     summary: 'Delete user (Admin only)',
     description: 'Permanently delete a user account. Requires admin privileges.'

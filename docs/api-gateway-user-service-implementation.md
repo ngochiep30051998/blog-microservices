@@ -732,7 +732,7 @@ export class UserController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
@@ -746,7 +746,7 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Profile retrieved successfully', type: UserResponseDto })
   async getProfile(@Request() req): Promise<UserResponseDto> {
@@ -755,7 +755,7 @@ export class UserController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User found', type: UserResponseDto })
@@ -766,7 +766,7 @@ export class UserController {
 
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, description: 'Profile updated successfully', type: UserResponseDto })
   async updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
@@ -776,7 +776,7 @@ export class UserController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update user by ID (Admin only)' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully', type: UserResponseDto })
@@ -786,7 +786,7 @@ export class UserController {
 
   @Patch('profile/change-password')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Change user password' })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   @ApiResponse({ status: 400, description: 'Current password is incorrect' })
@@ -797,7 +797,7 @@ export class UserController {
   @Patch(':id/deactivate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Deactivate user (Admin only)' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User deactivated successfully', type: UserResponseDto })
@@ -808,7 +808,7 @@ export class UserController {
   @Patch(':id/activate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Activate user (Admin only)' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User activated successfully', type: UserResponseDto })
@@ -819,7 +819,7 @@ export class UserController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete user (Admin only)' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully' })
@@ -1116,7 +1116,7 @@ export class UserProxyController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -1126,7 +1126,7 @@ export class UserProxyController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get current user profile' })
   async getProfile(@Headers('authorization') auth: string) {
     return this.proxyService.proxyRequest('user', '/users/profile', 'GET', null, { authorization: auth });
@@ -1134,7 +1134,7 @@ export class UserProxyController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'id', type: 'string' })
   async findOne(@Param('id') id: string, @Headers('authorization') auth: string) {
@@ -1143,7 +1143,7 @@ export class UserProxyController {
 
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update current user profile' })
   async updateProfile(@Body() updateUserDto: any, @Headers('authorization') auth: string) {
     return this.proxyService.proxyRequest('user', '/users/profile', 'PATCH', updateUserDto, { authorization: auth });
@@ -1151,7 +1151,7 @@ export class UserProxyController {
 
   @Patch('profile/change-password')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Change user password' })
   async changePassword(@Body() changePasswordDto: any, @Headers('authorization') auth: string) {
     return this.proxyService.proxyRequest('user', '/users/profile/change-password', 'PATCH', changePasswordDto, { authorization: auth });
@@ -1159,7 +1159,7 @@ export class UserProxyController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update user by ID (Admin only)' })
   async update(@Param('id') id: string, @Body() updateUserDto: any, @Headers('authorization') auth: string) {
     return this.proxyService.proxyRequest('user', `/users/${id}`, 'PATCH', updateUserDto, { authorization: auth });
@@ -1167,7 +1167,7 @@ export class UserProxyController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete user (Admin only)' })
   async remove(@Param('id') id: string, @Headers('authorization') auth: string) {
     return this.proxyService.proxyRequest('user', `/users/${id}`, 'DELETE', null, { authorization: auth });

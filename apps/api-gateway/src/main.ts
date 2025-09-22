@@ -53,10 +53,10 @@ async function bootstrap() {
     prefix: 'api/v',
   });
 
-  // Global prefix
-  app.setGlobalPrefix('api', {
-    exclude: ['health', 'docs', 'docs-json', 'docs-yaml'],
-  });
+  // No global prefix needed - versioning handles it
+  // app.setGlobalPrefix('api', {
+  //   exclude: ['health', 'docs', 'docs-json', 'docs-yaml'],
+  // });
 
   // Swagger setup
   const swaggerConfig = SwaggerConfigBuilder.createConfig({

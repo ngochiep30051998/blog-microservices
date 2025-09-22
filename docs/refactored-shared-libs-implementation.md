@@ -980,7 +980,7 @@ export class UserController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiResponse({ 
     status: 200, 
@@ -992,7 +992,7 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ 
     status: 200, 
@@ -1005,7 +1005,7 @@ export class UserController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ 
@@ -1023,7 +1023,7 @@ export class UserController {
 
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ 
     status: 200, 
@@ -1039,7 +1039,7 @@ export class UserController {
 
   @Patch('profile/change-password')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Change user password' })
   @ApiResponse({ 
     status: 200, 
@@ -1059,7 +1059,7 @@ export class UserController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update user by ID (Admin only)' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ 
@@ -1077,7 +1077,7 @@ export class UserController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete user (Admin only)' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ 
@@ -1297,7 +1297,7 @@ export class UserProxyController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiResponse({ 
     status: 200, 
@@ -1319,7 +1319,7 @@ export class UserProxyController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ 
     status: 200, 
@@ -1338,7 +1338,7 @@ export class UserProxyController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ 
@@ -1365,7 +1365,7 @@ export class UserProxyController {
 
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ 
     status: 200, 
@@ -1387,7 +1387,7 @@ export class UserProxyController {
 
   @Patch('profile/change-password')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Change user password' })
   @ApiResponse({ 
     status: 200, 
@@ -1412,7 +1412,7 @@ export class UserProxyController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update user by ID (Admin only)' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ 
@@ -1436,7 +1436,7 @@ export class UserProxyController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete user (Admin only)' })
   @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
   @ApiResponse({ 

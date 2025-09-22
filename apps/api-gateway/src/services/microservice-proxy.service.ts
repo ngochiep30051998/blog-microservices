@@ -39,7 +39,7 @@ export class MicroserviceProxyService {
       }],
       ['post', {
         name: 'Post Service',
-        url: this.configService.get('POST_SERVICE_URL', 'http://localhost:3002'),
+        url: this.configService.get('POST_SERVICE_URL', 'http://localhost:9002'),
         timeout: this.configService.get('POST_SERVICE_TIMEOUT', this.defaultTimeout),
         retries: this.defaultRetries,
       }],
@@ -377,6 +377,139 @@ export class MicroserviceProxyService {
     
     for (const [name, config] of this.services.entries()) {
       this.logger.log(`  • ${config.name}: ${config.url} (timeout: ${config.timeout}ms)`);
+    }
+  }
+
+  /**
+   * Proxy file upload to microservice
+   */
+  async proxyFileUpload(
+    serviceName: string,
+    path: string,
+    file: any,
+    headers: Record<string, string> = {}
+  ): Promise<any> {
+    const serviceConfig = this.services.get(serviceName);
+    if (!serviceConfig) {
+      throw new Error(`Service ${serviceName} not configured`);
+    }
+
+    const FormData = require('form-data');
+    const form = new FormData();
+    form.append('file', file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+    });
+
+    const url = `${serviceConfig.url}${path}`;
+    
+    try {
+      const response = await this.httpService.axiosRef({
+        method: 'POST',
+        url,
+        data: form,
+        headers: {
+          ...form.getHeaders(),
+          ...headers,
+        },
+        timeout: serviceConfig.timeout,
+      });
+
+      return response.data;
+    } catch (error) {
+      this.handleProxyError(error, serviceName, path);
+    }
+  }
+
+  /**
+   * Proxy multiple file uploads to microservice
+   */
+  async proxyMultipleFileUpload(
+    serviceName: string,
+    path: string,
+    files: any[],
+    headers: Record<string, string> = {}
+  ): Promise<any> {
+    const serviceConfig = this.services.get(serviceName);
+    if (!serviceConfig) {
+      throw new Error(`Service ${serviceName} not configured`);
+    }
+
+    const FormData = require('form-data');
+    const form = new FormData();
+    
+    files.forEach(file => {
+      form.append('files', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+      });
+    });
+
+    const url = `${serviceConfig.url}${path}`;
+    
+    try {
+      const response = await this.httpService.axiosRef({
+        method: 'POST',
+        url,
+        data: form,
+        headers: {
+          ...form.getHeaders(),
+          ...headers,
+        },
+        timeout: serviceConfig.timeout,
+      });
+
+      return response.data;
+    } catch (error) {
+      this.handleProxyError(error, serviceName, path);
+    }
+  }
+
+  /**
+   * Handle proxy errors consistently
+   */
+  private handleProxyError(error: any, serviceName: string, path: string): never {
+    const serviceConfig = this.services.get(serviceName);
+    const serviceName_ = serviceConfig?.name || serviceName;
+
+    this.logger.error(`Error in ${serviceName_} (${path}):`, error.message);
+
+    if (error.response) {
+      // Server responded with error status
+      throw new HttpException(
+        error.response.data || `${serviceName_} error`,
+        error.response.status,
+      );
+    } else if (error.code === 'ECONNREFUSED') {
+      // Connection refused
+      throw new HttpException(
+        {
+          message: `${serviceName_} is currently unavailable`,
+          service: serviceName,
+          error: 'SERVICE_UNAVAILABLE'
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    } else if (error.code === 'ECONNABORTED') {
+      // Request timeout
+      throw new HttpException(
+        {
+          message: `${serviceName_} request timeout`,
+          service: serviceName,
+          error: 'REQUEST_TIMEOUT'
+        },
+        HttpStatus.REQUEST_TIMEOUT,
+      );
+    } else {
+      // Unknown error
+      throw new HttpException(
+        {
+          message: `Internal server error while communicating with ${serviceName_}`,
+          service: serviceName,
+          error: 'INTERNAL_SERVER_ERROR'
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
