@@ -5,6 +5,7 @@ export const KAFKA_TOPICS = {
   COMMENT_EVENTS: 'comment.events',
   NOTIFICATION_EVENTS: 'notification.events',
   ANALYTICS_EVENTS: 'analytics.events',
+  FILE_EVENTS: 'file.events',
 } as const;
 
 // Event types
@@ -43,6 +44,18 @@ export const NOTIFICATION_EVENT_TYPES = {
   IN_APP_SENT: 'notification.in_app_sent',
 } as const;
 
+export const FILE_EVENT_TYPES = {
+  UPLOADED: 'file.uploaded',
+  UPDATED: 'file.updated',
+  DELETED: 'file.deleted',
+  PROCESSING_STARTED: 'file.processing_started',
+  PROCESSING_COMPLETED: 'file.processing_completed',
+  PROCESSING_FAILED: 'file.processing_failed',
+  VIEWED: 'file.viewed',
+  DOWNLOAD_REQUESTED: 'file.download_requested',
+  METADATA_UPDATED: 'file.metadata_updated',
+} as const;
+
 // Consumer group IDs
 export const CONSUMER_GROUPS = {
   USER_SERVICE: 'user-service-consumers',
@@ -50,4 +63,5 @@ export const CONSUMER_GROUPS = {
   COMMENT_SERVICE: 'comment-service-consumers',
   NOTIFICATION_SERVICE: 'notification-service-consumers',
   ANALYTICS_SERVICE: 'analytics-service-consumers',
+  FILES_SERVICE: 'files-service-consumers',
 } as const;

@@ -8,6 +8,7 @@ import {
   UploadStatus 
 } from '../entities/file-upload.entity';
 import { CloudinaryService } from './cloudinary.service';
+import { KafkaEventsService } from './kafka-events.service';
 import { 
   UploadFileDto, 
   UpdateFileDto, 
@@ -24,6 +25,7 @@ export class FilesService {
     @InjectModel(FileUpload.name) 
     private fileUploadModel: Model<FileUploadDocument>,
     private cloudinaryService: CloudinaryService,
+    private kafkaEventsService: KafkaEventsService,
   ) {}
 
   /**
@@ -65,6 +67,13 @@ export class FilesService {
     });
     await fileRecord.save();
 
+    // Publish processing started event
+    try {
+      await this.kafkaEventsService.publishFileProcessingStartedEvent(fileRecord);
+    } catch (kafkaError) {
+      console.warn('Failed to publish processing started event:', kafkaError);
+    }
+
     try {
       // Upload to Cloudinary
       console.log('Cloudinary upload result:');
@@ -97,6 +106,14 @@ export class FilesService {
 
       await fileRecord.save();
 
+      // Publish file uploaded and processing completed events
+      try {
+        await this.kafkaEventsService.publishFileProcessingCompletedEvent(fileRecord);
+        await this.kafkaEventsService.publishFileUploadedEvent(fileRecord);
+      } catch (kafkaError) {
+        console.warn('Failed to publish file events:', kafkaError);
+      }
+
       return this.mapToResponseDto(fileRecord);
 
     } catch (error: any) {
@@ -105,6 +122,13 @@ export class FilesService {
       fileRecord.processingError = error.message;
       fileRecord.processingCompletedAt = new Date();
       await fileRecord.save();
+
+      // Publish processing failed event
+      try {
+        await this.kafkaEventsService.publishFileProcessingFailedEvent(fileRecord, error.message);
+      } catch (kafkaError) {
+        console.warn('Failed to publish processing failed event:', kafkaError);
+      }
 
       throw error;
     }
@@ -165,6 +189,13 @@ export class FilesService {
         lastAccessedAt: new Date()
       }
     ).exec();
+
+    // Publish file viewed event
+    try {
+      await this.kafkaEventsService.publishFileViewedEvent(id, file.filename, userId);
+    } catch (kafkaError) {
+      console.warn('Failed to publish file viewed event:', kafkaError);
+    }
 
     return this.mapToResponseDto(file);
   }
@@ -268,6 +299,13 @@ export class FilesService {
 
     await file.save();
 
+    // Publish file updated event
+    try {
+      await this.kafkaEventsService.publishFileUpdatedEvent(file);
+    } catch (kafkaError) {
+      console.warn('Failed to publish file updated event:', kafkaError);
+    }
+
     return this.mapToResponseDto(file);
   }
 
@@ -297,6 +335,13 @@ export class FilesService {
     file.status = UploadStatus.DELETED;
 
     await file.save();
+
+    // Publish file deleted event
+    try {
+      await this.kafkaEventsService.publishFileDeletedEvent(id, file.filename, userId);
+    } catch (kafkaError) {
+      console.warn('Failed to publish file deleted event:', kafkaError);
+    }
 
     // Optionally delete from Cloudinary (async)
     this.cloudinaryService.deleteFile(file.cloudinaryPublicId, file.resourceType)

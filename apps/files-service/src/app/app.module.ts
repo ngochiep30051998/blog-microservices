@@ -7,10 +7,13 @@ import { mongooseConfigFactory } from '../config/mongoose.config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { MulterModule } from '@nestjs/platform-express';
 import { AuthModule } from '@blog/shared/auth';
+import { KafkaModule } from '@blog/shared/kafka';
 import { FileUpload, FileUploadSchema } from '../entities/file-upload.entity';
 import { UploadController } from '../controllers/files.controller';
 import { FilesService } from '../services/files.service';
 import { CloudinaryService } from '../services/cloudinary.service';
+import { KafkaEventsService } from '../services/kafka-events.service';
+import { AppInitService } from '../services/app-init.service';
 import { CloudinaryProvider } from '../config/cloudinary.config';
 
 @Module({
@@ -56,12 +59,17 @@ import { CloudinaryProvider } from '../config/cloudinary.config';
 
     // Authentication module
     AuthModule,
+
+    // Kafka module for messaging
+    KafkaModule,
   ],
   controllers: [AppController, UploadController],
   providers: [
     AppService, 
     FilesService, 
     CloudinaryService,
+    KafkaEventsService,
+    AppInitService,
     CloudinaryProvider
   ],
 })
