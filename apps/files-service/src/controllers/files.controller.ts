@@ -165,7 +165,7 @@ Upload a single file with metadata to Cloudinary and store information in MongoD
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-
+    console.log(ip, userAgent);
     const result = await this.fileServices.uploadFile(
       file,
       uploadDto,

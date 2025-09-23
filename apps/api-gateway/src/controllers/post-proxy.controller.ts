@@ -13,6 +13,7 @@ import {
   UploadedFiles,
   UseInterceptors,
   Request,
+  Ip,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -247,80 +248,5 @@ export class PostProxyController {
     );
   }
 
-  // Image upload endpoints (proxy with multipart support)
-  @Post('upload/thumbnail')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload post thumbnail' })
-  @ApiSuccessResponse(Object, 'Thumbnail uploaded')
-  async uploadThumbnail(
-    @UploadedFile() file: any,
-    @Headers('authorization') auth: string
-  ): Promise<SuccessResponseDto<any>> {
-    return this.proxyService.proxyFileUpload(
-      'post',
-      '/posts/posts/upload/thumbnail',
-      file,
-      { authorization: auth }
-    );
-  }
 
-  @Post('upload/featured')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload featured image' })
-  @ApiSuccessResponse(Object, 'Featured image uploaded')
-  async uploadFeaturedImage(
-    @UploadedFile() file: any,
-    @Headers('authorization') auth: string
-  ): Promise<SuccessResponseDto<any>> {
-    return this.proxyService.proxyFileUpload(
-      'post',
-      '/posts/posts/upload/featured',
-      file,
-      { authorization: auth }
-    );
-  }
-
-  @Post('upload/content')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload content image' })
-  @ApiSuccessResponse(Object, 'Content image uploaded')
-  async uploadContentImage(
-    @UploadedFile() file: any,
-    @Headers('authorization') auth: string
-  ): Promise<SuccessResponseDto<any>> {
-    return this.proxyService.proxyFileUpload(
-      'post',
-      '/posts/posts/upload/content',
-      file,
-      { authorization: auth }
-    );
-  }
-
-  @Post('upload/gallery')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FilesInterceptor('files', 10))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload gallery images' })
-  @ApiSuccessResponse(Object, 'Gallery images uploaded')
-  async uploadGalleryImages(
-    @UploadedFiles() files: any[],
-    @Headers('authorization') auth: string
-  ): Promise<SuccessResponseDto<any[]>> {
-    return this.proxyService.proxyMultipleFileUpload(
-      'post',
-      '/posts/posts/upload/gallery',
-      files,
-      { authorization: auth }
-    );
-  }
 }

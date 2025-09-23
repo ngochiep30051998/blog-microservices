@@ -61,6 +61,12 @@ export class MicroserviceProxyService {
         timeout: this.configService.get('ANALYTICS_SERVICE_TIMEOUT', this.defaultTimeout),
         retries: this.defaultRetries,
       }],
+      ['files', {
+        name: 'Files Service',
+        url: this.configService.get('FILES_SERVICE_URL', 'http://localhost:9006'),
+        timeout: this.configService.get('FILES_SERVICE_TIMEOUT', this.defaultTimeout),
+        retries: this.defaultRetries,
+      }],
     ]);
 
     this.logger.log('Microservice Proxy Service initialized');
@@ -96,7 +102,7 @@ export class MicroserviceProxyService {
     options: ProxyRequestOptions,
   ): Promise<any> {
     const serviceConfig = this.services.get(serviceName);
-    
+
     if (!serviceConfig) {
       throw new HttpException(
         `Service '${serviceName}' not found. Available services: ${Array.from(this.services.keys()).join(', ')}`,
@@ -106,15 +112,15 @@ export class MicroserviceProxyService {
 
     const url = `${serviceConfig.url}${path}`;
     const requestConfig = this.buildRequestConfig(url, serviceConfig, options);
-    
+
     let lastError: any;
-    
+
     for (let attempt = 1; attempt <= serviceConfig.retries; attempt++) {
       try {
         this.logger.debug(`[Attempt ${attempt}/${serviceConfig.retries}] ${options.method} ${url}`);
-        
+
         const response = await this.executeRequest(requestConfig, serviceConfig.timeout);
-        
+
         this.logger.log(`✅ ${options.method} ${url} - ${response.status}`);
         return response.data;
 
@@ -218,7 +224,7 @@ export class MicroserviceProxyService {
     } else if (error.code === 'ECONNREFUSED') {
       // Connection refused - service is down
       this.logger.error(`${serviceName_} is unavailable (connection refused)`);
-      
+
       throw new HttpException(
         {
           message: `${serviceName_} is currently unavailable`,
@@ -231,7 +237,7 @@ export class MicroserviceProxyService {
     } else if (error instanceof TimeoutError || error.name === 'TimeoutError' || error.code === 'ECONNABORTED') {
       // Request timeout
       this.logger.error(`${serviceName_} request timeout`);
-      
+
       throw new HttpException(
         {
           message: `${serviceName_} request timeout`,
@@ -244,7 +250,7 @@ export class MicroserviceProxyService {
     } else {
       // Unknown error
       this.logger.error(`${serviceName_} unknown error:`, error);
-      
+
       throw new HttpException(
         {
           message: `Internal server error while communicating with ${serviceName_}`,
@@ -266,11 +272,11 @@ export class MicroserviceProxyService {
       async ([serviceName, config]) => {
         try {
           const startTime = Date.now();
-          
+
           const response = await this.proxyRequest(serviceName, '/health', 'GET');
-          
+
           const responseTime = Date.now() - startTime;
-          
+
           healthChecks[serviceName] = {
             status: 'healthy',
             name: config.name,
@@ -298,9 +304,9 @@ export class MicroserviceProxyService {
     const healthyCount = Object.values(healthChecks).filter(
       (check: any) => check.status === 'healthy'
     ).length;
-    
+
     const totalCount = Object.keys(healthChecks).length;
-    
+
     let overallStatus: string;
     if (healthyCount === totalCount) {
       overallStatus = 'healthy';
@@ -350,7 +356,7 @@ export class MicroserviceProxyService {
 
     const updated = { ...existing, ...updates };
     this.services.set(serviceName, updated);
-    
+
     this.logger.log(`Updated configuration for ${serviceName}:`, updated);
     return true;
   }
@@ -374,7 +380,7 @@ export class MicroserviceProxyService {
    */
   private logServiceConfigs(): void {
     this.logger.log('📋 Registered microservices:');
-    
+
     for (const [name, config] of this.services.entries()) {
       this.logger.log(`  • ${config.name}: ${config.url} (timeout: ${config.timeout}ms)`);
     }
@@ -387,7 +393,10 @@ export class MicroserviceProxyService {
     serviceName: string,
     path: string,
     file: any,
-    headers: Record<string, string> = {}
+    formData: Record<string, any> = {},
+    headers: Record<string, string> = {},
+    clientIp?: string,
+    userAgent?: string
   ): Promise<any> {
     const serviceConfig = this.services.get(serviceName);
     if (!serviceConfig) {
@@ -396,13 +405,26 @@ export class MicroserviceProxyService {
 
     const FormData = require('form-data');
     const form = new FormData();
+    
+    // Append file
     form.append('file', file.buffer, {
       filename: file.originalname,
       contentType: file.mimetype,
     });
 
+    // Append form data fields (type, alt, caption, etc.) - excluding ip and userAgent from form data
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && key !== 'ip' && key !== 'userAgent') {
+        if (Array.isArray(value)) {
+          // Handle arrays (like tags)
+          value.forEach(item => form.append(`${key}[]`, item));
+        } else {
+          form.append(key, String(value));
+        }
+      }
+    });
+
     const url = `${serviceConfig.url}${path}`;
-    
     try {
       const response = await this.httpService.axiosRef({
         method: 'POST',
@@ -410,6 +432,10 @@ export class MicroserviceProxyService {
         data: form,
         headers: {
           ...form.getHeaders(),
+          'X-Request-ID': this.generateRequestId(),
+          'X-Forwarded-By': 'api-gateway',
+          'X-Forwarded-For': clientIp || 'unknown',
+          'X-User-Agent': userAgent || 'unknown',
           ...headers,
         },
         timeout: serviceConfig.timeout,
@@ -428,7 +454,10 @@ export class MicroserviceProxyService {
     serviceName: string,
     path: string,
     files: any[],
-    headers: Record<string, string> = {}
+    formData: Record<string, any> = {},
+    headers: Record<string, string> = {},
+    clientIp?: string,
+    userAgent?: string
   ): Promise<any> {
     const serviceConfig = this.services.get(serviceName);
     if (!serviceConfig) {
@@ -437,7 +466,8 @@ export class MicroserviceProxyService {
 
     const FormData = require('form-data');
     const form = new FormData();
-    
+
+    // Append files
     files.forEach(file => {
       form.append('files', file.buffer, {
         filename: file.originalname,
@@ -445,8 +475,20 @@ export class MicroserviceProxyService {
       });
     });
 
+    // Append form data fields (type, alt, caption, etc.) - excluding ip and userAgent from form data
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && key !== 'ip' && key !== 'userAgent') {
+        if (Array.isArray(value)) {
+          // Handle arrays (like tags)
+          value.forEach(item => form.append(`${key}[]`, item));
+        } else {
+          form.append(key, String(value));
+        }
+      }
+    });
+
     const url = `${serviceConfig.url}${path}`;
-    
+
     try {
       const response = await this.httpService.axiosRef({
         method: 'POST',
@@ -454,6 +496,10 @@ export class MicroserviceProxyService {
         data: form,
         headers: {
           ...form.getHeaders(),
+          'X-Request-ID': this.generateRequestId(),
+          'X-Forwarded-By': 'api-gateway',
+          'X-Forwarded-For': clientIp || 'unknown',
+          'X-User-Agent': userAgent || 'unknown',
           ...headers,
         },
         timeout: serviceConfig.timeout,
