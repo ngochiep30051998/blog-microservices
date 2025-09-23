@@ -177,7 +177,14 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy, OnApplicatio
         `📤 Event published to ${topic}[${result[0].partition}] offset ${result[0].baseOffset}: ${payload.type}`
       );
 
-    } catch (error) {
+    } catch (error: any) {
+      // Check if it's a topic-related error and provide helpful message
+      if (error?.message && error.message.includes('topic-partition')) {
+        this.logger.error(
+          `❌ Topic '${topic}' does not exist. Please create it with: ` +
+          `docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --create --topic ${topic} --partitions 3 --replication-factor 1`
+        );
+      }
       this.logger.error(`Failed to publish event to ${topic}:`, error);
       throw error;
     }
@@ -244,19 +251,21 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy, OnApplicatio
     const consumerKey = `${topic}-${options.groupId}`;
     
     if (this.consumers.has(consumerKey)) {
-      this.logger.warn(`Consumer already exists for ${consumerKey}`);
+      this.logger.warn(`Consumer already exists for ${consumerKey}, skipping subscription`);
       return;
     }
 
     try {
       const consumerConfig: ConsumerConfig = {
         groupId: options.groupId,
-        sessionTimeout: options.sessionTimeout || 30000,
-        heartbeatInterval: options.heartbeatInterval || 3000,
+        sessionTimeout: options.sessionTimeout || 60000, // Increased from 30s to 60s
+        heartbeatInterval: options.heartbeatInterval || 20000, // Increased to 20s (should be 1/3 of session timeout)
         maxWaitTimeInMs: options.maxWaitTimeInMs || 5000,
         minBytes: options.minBytes || 1,
         maxBytes: options.maxBytes || 1048576, // 1MB
-        allowAutoTopicCreation: false,
+        allowAutoTopicCreation: true, // Changed to true to handle missing topics
+        // Add rebalancing timeout to prevent frequent rebalances
+        rebalanceTimeout: 60000, // 60 seconds
         retry: {
           initialRetryTime: 300,
           retries: 5,
@@ -265,6 +274,24 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy, OnApplicatio
       };
 
       const consumer = this.kafka.consumer(consumerConfig);
+      
+      // Add consumer event listeners for better debugging
+      consumer.on('consumer.group_join', (event) => {
+        this.logger.log(`📥 Consumer joined group for topic: ${topic}`);
+      });
+
+      consumer.on('consumer.rebalancing', (event) => {
+        this.logger.warn(`⚖️ Consumer group rebalancing for topic: ${topic}`);
+      });
+
+      consumer.on('consumer.connect', () => {
+        this.logger.log(`🔗 Consumer connected for topic: ${topic}`);
+      });
+
+      consumer.on('consumer.disconnect', () => {
+        this.logger.warn(`🔌 Consumer disconnected for topic: ${topic}`);
+      });
+
       await consumer.connect();
 
       await consumer.subscribe({ 
@@ -274,6 +301,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy, OnApplicatio
 
       await consumer.run({
         autoCommit: options.autoCommit !== false,
+        autoCommitInterval: 5000, // Commit every 5 seconds
         eachMessage: async (messagePayload: EachMessagePayload) => {
           await this.processMessage(messagePayload, handler, topic);
         },
@@ -284,7 +312,19 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy, OnApplicatio
 
       this.logger.log(`📥 Subscribed to topic ${topic} with group ${options.groupId}`);
 
-    } catch (error) {
+    } catch (error: any) {
+      // Provide helpful error messages for common issues
+      if (error?.message && error.message.includes('topic-partition')) {
+        this.logger.error(
+          `❌ Topic '${topic}' does not exist. Please create it with: ` +
+          `docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --create --topic ${topic} --partitions 3 --replication-factor 1`
+        );
+      } else if (error?.message && error.message.includes('rebalancing')) {
+        this.logger.error(
+          `⚖️ Consumer group rebalancing issue for topic '${topic}'. ` +
+          `This might be due to multiple consumers with the same group ID or network issues.`
+        );
+      }
       this.logger.error(`Failed to subscribe to ${topic}:`, error);
       throw error;
     }
@@ -453,23 +493,46 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy, OnApplicatio
     this.logger.log('🔌 Disconnecting Kafka service...');
 
     try {
-      // Disconnect all consumers
+      // Disconnect all consumers gracefully with timeout
       const consumerDisconnectPromises = Array.from(this.consumers.values()).map(
-        consumer => consumer.disconnect()
+        async (consumer) => {
+          try {
+            // Give consumers time to commit offsets and leave groups gracefully
+            await Promise.race([
+              consumer.disconnect(),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Consumer disconnect timeout')), 10000)
+              )
+            ]);
+          } catch (error) {
+            this.logger.warn('Consumer disconnect warning:', error);
+          }
+        }
       );
-      await Promise.all(consumerDisconnectPromises);
+      
+      await Promise.allSettled(consumerDisconnectPromises);
       
       this.consumers.clear();
       this.subscriptions.clear();
 
-      // Disconnect producer
-      await this.producer.disconnect();
+      // Disconnect producer with timeout
+      try {
+        await Promise.race([
+          this.producer.disconnect(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Producer disconnect timeout')), 5000)
+          )
+        ]);
+      } catch (error) {
+        this.logger.warn('Producer disconnect warning:', error);
+      }
       
       this.isConnected = false;
       this.logger.log('✅ Kafka service disconnected successfully');
 
     } catch (error) {
       this.logger.error('❌ Error disconnecting Kafka service:', error);
+      this.isConnected = false; // Set to false anyway to prevent hanging
     }
   }
 

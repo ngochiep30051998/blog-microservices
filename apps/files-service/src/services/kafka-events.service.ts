@@ -47,6 +47,9 @@ export class KafkaEventsService {
         {
           groupId: CONSUMER_GROUPS.FILES_SERVICE,
           fromBeginning: false,
+          sessionTimeout: 60000, // 60 seconds
+          heartbeatInterval: 20000, // 20 seconds
+          autoCommit: true,
         }
       );
 
@@ -57,6 +60,9 @@ export class KafkaEventsService {
         {
           groupId: CONSUMER_GROUPS.FILES_SERVICE,
           fromBeginning: false,
+          sessionTimeout: 60000, // 60 seconds  
+          heartbeatInterval: 20000, // 20 seconds
+          autoCommit: true,
         }
       );
 
