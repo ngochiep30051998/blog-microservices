@@ -48,10 +48,10 @@ export class FileUpload {
   status: UploadStatus;
 
   // Cloudinary information
-  @Prop({ required: true })
+  @Prop()
   cloudinaryPublicId: string;
 
-  @Prop({ required: true })
+  @Prop()
   cloudinaryUrl: string;
 
   @Prop()

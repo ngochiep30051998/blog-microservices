@@ -55,17 +55,17 @@ import {
   FileType,
   UploadStatus,
 } from '@blog/shared/dto';
+import { FilesService } from '../services/files.service';
 
 // Local imports
-import { UploadService } from '../services/upload.service';
 
-@ApiTags('File Upload')
-@Controller('upload')
+@ApiTags('File management')
+@Controller('files')
 @UseGuards(ThrottlerGuard) // Rate limiting
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly fileServices: FilesService) {}
 
-  @Post('single')
+  @Post('upload-single')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @UseInterceptors(FileInterceptor('file'))
@@ -166,7 +166,7 @@ Upload a single file with metadata to Cloudinary and store information in MongoD
       throw new BadRequestException('No file uploaded');
     }
 
-    const result = await this.uploadService.uploadFile(
+    const result = await this.fileServices.uploadFile(
       file,
       uploadDto,
       req.user.id,
@@ -182,7 +182,7 @@ Upload a single file with metadata to Cloudinary and store information in MongoD
     });
   }
 
-  @Post('multiple')
+  @Post('upload-multiple')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @UseInterceptors(FilesInterceptor('files', 10)) // Max 10 files
@@ -215,7 +215,7 @@ Upload a single file with metadata to Cloudinary and store information in MongoD
       throw new BadRequestException('Maximum 10 files allowed per upload');
     }
 
-    const results = await this.uploadService.uploadMultipleFiles(
+    const results = await this.fileServices.uploadMultipleFiles(
       files,
       uploadDto,
       req.user.id,
@@ -279,7 +279,7 @@ Retrieve paginated list of uploaded files with advanced filtering options.
       search,
     };
 
-    const result = await this.uploadService.findAll(paginationDto, filters);
+    const result = await this.fileServices.findAll(paginationDto, filters);
 
     return ResponseBuilder.paginated(
       result.items,
@@ -302,7 +302,7 @@ Retrieve paginated list of uploaded files with advanced filtering options.
     @Query() paginationDto: PaginationDto,
     @Request() req: any
   ): Promise<SuccessResponseDto<any>> {
-    const result = await this.uploadService.getFilesByUser(req.user.id, paginationDto);
+    const result = await this.fileServices.getFilesByUser(req.user.id, paginationDto);
 
     return ResponseBuilder.paginated(
       result.items,
@@ -330,7 +330,7 @@ Retrieve paginated list of uploaded files with advanced filtering options.
     // TODO: Add admin role check for viewing other users' stats
     const targetUserId = userId && req.user.role === 'admin' ? userId : req.user.id;
 
-    const stats = await this.uploadService.getStats(targetUserId);
+    const stats = await this.fileServices.getStats(targetUserId);
 
     return ResponseBuilder.success(
       stats,
@@ -353,7 +353,7 @@ Retrieve paginated list of uploaded files with advanced filtering options.
     @Param('id') id: string,
     @Request() req: any
   ): Promise<SuccessResponseDto<FileUploadResponseDto>> {
-    const file = await this.uploadService.findById(id, req.user.id);
+    const file = await this.fileServices.findById(id, req.user.id);
 
     return ResponseBuilder.success(file, 'File retrieved successfully');
   }
@@ -372,7 +372,7 @@ Retrieve paginated list of uploaded files with advanced filtering options.
     @Body() updateDto: UpdateFileDto,
     @Request() req: any
   ): Promise<SuccessResponseDto<FileUploadResponseDto>> {
-    const file = await this.uploadService.updateFile(id, updateDto, req.user.id);
+    const file = await this.fileServices.updateFile(id, updateDto, req.user.id);
 
     return ResponseBuilder.updated(file, 'File updated successfully', {
       updatedFields: Object.keys(updateDto),
@@ -396,7 +396,7 @@ Retrieve paginated list of uploaded files with advanced filtering options.
     @Request() req: any,
     @Query('reason') reason?: string
   ): Promise<SuccessResponseDto<null>> {
-    await this.uploadService.deleteFile(id, req.user.id, reason);
+    await this.fileServices.deleteFile(id, req.user.id, reason);
 
     return ResponseBuilder.deleted('File deleted successfully', {
       deletedBy: req.user.id,
@@ -421,7 +421,7 @@ Retrieve paginated list of uploaded files with advanced filtering options.
     deleted: number;
     errors: string[];
   }>> {
-    const result = await this.uploadService.bulkDelete(bulkDeleteDto, req.user.id);
+    const result = await this.fileServices.bulkDelete(bulkDeleteDto, req.user.id);
 
     const message = result.errors.length > 0
       ? `${result.deleted} files deleted, ${result.errors.length} errors`
@@ -445,120 +445,13 @@ Retrieve paginated list of uploaded files with advanced filtering options.
   async trackDownload(
     @Param('id') id: string
   ): Promise<SuccessResponseDto<{ message: string }>> {
-    await this.uploadService.trackDownload(id);
+    await this.fileServices.trackDownload(id);
 
     return ResponseBuilder.success(
       { message: 'Download tracked' },
       'Download tracked successfully'
     );
   }
-
-  // Specific upload endpoints for different file types
-
-  @Post('thumbnail')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'Upload thumbnail image',
-    description: 'Upload and optimize a thumbnail image (800x450, WebP format)'
-  })
-  @ApiCreatedResponse(FileUploadResponseDto, 'Thumbnail uploaded successfully')
-  async uploadThumbnail(
-    @UploadedFile() file: any,
-    @Body() metadata: Omit<UploadFileDto, 'type'>,
-    @Request() req: any,
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string
-  ): Promise<SuccessResponseDto<FileUploadResponseDto>> {
-    return this.uploadSingle(
-      file,
-      { ...metadata, type: FileType.THUMBNAIL },
-      req,
-      ip,
-      userAgent
-    );
-  }
-
-  @Post('featured')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'Upload featured image',
-    description: 'Upload and optimize a featured image (1200x630 for social sharing)'
-  })
-  @ApiCreatedResponse(FileUploadResponseDto, 'Featured image uploaded successfully')
-  async uploadFeatured(
-    @UploadedFile() file: any,
-    @Body() metadata: Omit<UploadFileDto, 'type'>,
-    @Request() req: any,
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string
-  ): Promise<SuccessResponseDto<FileUploadResponseDto>> {
-    return this.uploadSingle(
-      file,
-      { ...metadata, type: FileType.FEATURED },
-      req,
-      ip,
-      userAgent
-    );
-  }
-
-  @Post('content')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'Upload content image',
-    description: 'Upload image for use within post content (rich text editor)'
-  })
-  @ApiCreatedResponse(FileUploadResponseDto, 'Content image uploaded successfully')
-  async uploadContent(
-    @UploadedFile() file: any,
-    @Body() metadata: Omit<UploadFileDto, 'type'>,
-    @Request() req: any,
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string
-  ): Promise<SuccessResponseDto<FileUploadResponseDto>> {
-    return this.uploadSingle(
-      file,
-      { ...metadata, type: FileType.CONTENT },
-      req,
-      ip,
-      userAgent
-    );
-  }
-
-  @Post('gallery')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FilesInterceptor('files', 10))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'Upload gallery images',
-    description: 'Upload multiple images for post gallery (max 10 files)'
-  })
-  @ApiResponse({ status: 201, description: 'Gallery images uploaded successfully' })
-  async uploadGallery(
-    @UploadedFiles() files: any[],
-    @Body() metadata: Omit<UploadFileDto, 'type'>,
-    @Request() req: any,
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string
-  ): Promise<SuccessResponseDto<FileUploadResponseDto[]>> {
-    return this.uploadMultiple(
-      files,
-      { ...metadata, type: FileType.GALLERY },
-      req,
-      ip,
-      userAgent
-    );
-  }
-
   /**
    * Format file size for display
    */

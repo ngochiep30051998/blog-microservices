@@ -16,6 +16,7 @@ import { CategoryProxyController } from '../controllers/category-proxy.controlle
 import { HealthController } from '../controllers/health.controller';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { FilesProxyController } from '../controllers/files-proxy.controller';
 
 @Module({
   imports: [
@@ -53,7 +54,8 @@ import { AppService } from './app.service';
     UserProxyController, 
     PostProxyController,
     CategoryProxyController,
-    HealthController
+    HealthController,
+    FilesProxyController
   ],
   providers: [
     AppService,

@@ -33,14 +33,14 @@ async function bootstrap() {
   });
 
   // Global prefix
-  app.setGlobalPrefix('uploads');
+  // app.setGlobalPrefix('files');
 
   // Swagger documentation
   if (configService.get('NODE_ENV') !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('Upload Service API')
+      .setTitle('Files Service API')
       .setDescription(`
-**Upload Service** for the Blog Microservices Platform.
+**Files Service** for the Blog Microservices Platform.
 
 ## Features
 
@@ -64,12 +64,12 @@ async function bootstrap() {
 
 ### 🔒 Security & Performance
 - JWT authentication required
-- Rate limiting (10 uploads/minute/IP)
+- Rate limiting (10 files/minute/IP)
 - File validation and sanitization
 - Soft delete with recovery options
 
 ### 🚀 Advanced Features
-- Bulk upload operations
+- Bulk file operations
 - Responsive image variants
 - SEO metadata support
 - Integration with post and category systems
@@ -93,7 +93,7 @@ async function bootstrap() {
 - PDF, DOC, DOCX, TXT, CSV
 
 ## Rate Limiting
-- 10 uploads per minute per IP address
+- 10 files per minute per IP address
 - Additional throttling for bulk operations
 
 ## Authentication
@@ -117,9 +117,6 @@ All endpoints require JWT authentication via Bearer token.
         'JWT-auth',
       )
       .addTag('Health', 'Service health and status endpoints')
-      .addTag('File Upload', 'File upload and management endpoints')
-      .addTag('File Management', 'File metadata and operations')
-      .addTag('Statistics', 'Upload and storage statistics')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
@@ -132,7 +129,7 @@ All endpoints require JWT authentication via Bearer token.
         filter: true,
         showRequestHeaders: true,
       },
-      customSiteTitle: 'Upload Service API Documentation',
+      customSiteTitle: 'file Service API Documentation',
       customfavIcon: '/favicon.ico',
       customJs: [
         'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.min.js',
@@ -144,16 +141,16 @@ All endpoints require JWT authentication via Bearer token.
     });
   }
 
-  const port = configService.get('UPLOAD_SERVICE_PORT', 9006);
+  const port = configService.get('FILES_SERVICE_PORT', 9006);
   await app.listen(port);
 
-  console.log(`🚀 Upload Service is running on: http://localhost:${port}`);
+  console.log(`🚀 Files Service is running on: http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
-  console.log(`🗄️  Database: ${configService.get('MONGODB_URI', 'mongodb://localhost:27017/blog-uploads')}`);
+  console.log(`🗄️  Database: ${configService.get('MONGODB_URI', 'mongodb://localhost:27017/blog-files')}`);
   console.log(`☁️  Cloud Storage: Cloudinary (${configService.get('CLOUDINARY_CLOUD_NAME', 'not-configured')})`);
 }
 
 bootstrap().catch((error) => {
-  console.error('Failed to start upload service:', error);
+  console.error('Failed to start files service:', error);
   process.exit(1);
 });

@@ -19,7 +19,7 @@ import {
 } from '@blog/shared/dto';
 
 @Injectable()
-export class UploadService {
+export class FilesService {
   constructor(
     @InjectModel(FileUpload.name) 
     private fileUploadModel: Model<FileUploadDocument>,
@@ -63,13 +63,12 @@ export class UploadService {
       cloudinaryPublicId: '',
       cloudinaryUrl: '',
     });
-
     await fileRecord.save();
 
     try {
       // Upload to Cloudinary
+      console.log('Cloudinary upload result:');
       const cloudinaryResult = await this.cloudinaryService.uploadFile(file, uploadDto.type);
-
       // Generate responsive URLs for images
       let responsiveUrls;
       if (this.isImageType(uploadDto.type)) {

@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { FileType } from '@blog/shared/dto';
+import { ConfigService } from '@nestjs/config';
 
 export interface CloudinaryUploadResult {
   publicId: string;
@@ -15,9 +16,13 @@ export interface CloudinaryUploadResult {
 
 @Injectable()
 export class CloudinaryService {
+  private rootFolder = '';
   constructor(
-    @Inject('CLOUDINARY') private cloudinaryInstance: typeof cloudinary
-  ) {}
+    @Inject('CLOUDINARY') private cloudinaryInstance: typeof cloudinary,
+    private configService: ConfigService
+  ) {
+    this.rootFolder = this.configService.get<string>('CLOUDINARY_CLOUD_FOLDER') || 'blog-microservices';
+  }
 
   /**
    * Upload file to Cloudinary based on file type
@@ -81,7 +86,7 @@ export class CloudinaryService {
     this.validateVideoFile(file);
 
     const uploadOptions = {
-      folder: 'blog/videos',
+      folder: `${this.rootFolder}/videos`,
       public_id: `video_${Date.now()}`,
       resource_type: 'video' as const,
       chunk_size: 20000000, // 20MB chunks
@@ -110,7 +115,7 @@ export class CloudinaryService {
     this.validateAudioFile(file);
 
     const uploadOptions = {
-      folder: 'blog/audio',
+      folder: `${this.rootFolder}/audio`,
       public_id: `audio_${Date.now()}`,
       resource_type: 'video' as const, // Cloudinary uses 'video' for audio too
       chunk_size: 20000000, // 20MB chunks
@@ -317,17 +322,17 @@ export class CloudinaryService {
    */
   private getFolderByType(type: FileType): string {
     const folderMap = {
-      [FileType.THUMBNAIL]: 'blog/thumbnails',
-      [FileType.FEATURED]: 'blog/featured',
-      [FileType.CONTENT]: 'blog/content',
-      [FileType.GALLERY]: 'blog/gallery',
-      [FileType.DOCUMENT]: 'blog/documents',
-      [FileType.VIDEO]: 'blog/videos',
-      [FileType.AUDIO]: 'blog/audio',
-      [FileType.OTHER]: 'blog/other',
+      [FileType.THUMBNAIL]: 'thumbnails',
+      [FileType.FEATURED]: 'featured',
+      [FileType.CONTENT]: 'content',
+      [FileType.GALLERY]: 'gallery',
+      [FileType.DOCUMENT]: 'documents',
+      [FileType.VIDEO]: 'videos',
+      [FileType.AUDIO]: 'audio',
+      [FileType.OTHER]: 'other',
     };
 
-    return folderMap[type] || 'blog/uploads';
+    return `${this.rootFolder}/${folderMap[type] || 'uploads'}`;
   }
 
   /**
