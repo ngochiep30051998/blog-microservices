@@ -1,5 +1,4 @@
 import LoadingProvider from '../providers/LoadingProvider';
-
 import Router from '../routing';
 
 const App = () => {
@@ -9,6 +8,5 @@ const App = () => {
             </LoadingProvider>
     )
 };
-
 
 export default App;
