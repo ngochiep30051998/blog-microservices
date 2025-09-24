@@ -3,13 +3,6 @@ import React from 'react';
 const LoginIllustration: React.FC = () => {
   return (
     <div className="w-full h-screen bg-gradient-to-br from-indigo-500 to-purple-600 relative overflow-hidden flex items-center justify-between px-12">
-      <div className="text-left z-10">
-        <h1 className="text-4xl font-bold text-white mb-8 leading-tight">
-          DAY-2
-          <br />
-          <span className="font-normal">Login Page</span>
-        </h1>
-      </div>
       
       {/* Illustration Container */}
       <div className="flex-1 flex items-center justify-center relative">
