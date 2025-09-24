@@ -3,6 +3,8 @@ import { Form, message } from 'antd';
 import LoginIllustration from '../../components/LoginIllustration';
 import SocialLoginButton from '../../components/SocialLoginButton';
 import InputField from '../../components/InputField';
+import apiService from '../../../../services/apiService';
+
 
 interface LoginFormValues {
   email: string;
@@ -22,6 +24,7 @@ export default function Login() {
       console.log('Login attempt:', { ...values, rememberMe });
       message.success('Login successful!');
       // Reset form after successful login
+      const res = await apiService.login(values.email, values.password);
       form.resetFields();
       setRememberMe(false);
     } catch (error) {

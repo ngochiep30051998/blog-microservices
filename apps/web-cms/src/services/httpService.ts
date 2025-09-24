@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const httpInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_PUBLIC_API_URL_WEB}`,
+  baseURL: `${import.meta.env.VITE_PUBLIC_API_GATEWAY_URL}/api/v1`,
 })
 
 httpInstance.interceptors.response.use(
