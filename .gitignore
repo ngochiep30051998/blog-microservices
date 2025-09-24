@@ -1,4 +1,3 @@
-
 .nx/installation
 .nx/cache
 .nx/workspace-data
@@ -31,3 +30,6 @@ lerna-debug.log*
 *.old
 *.orig
 *.rej
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
