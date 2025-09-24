@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { ConfigProvider } from 'antd';
-import './config/antd.config';
+import './configs/antd.config';
 import App from './app/app';
 
 const root = ReactDOM.createRoot(
