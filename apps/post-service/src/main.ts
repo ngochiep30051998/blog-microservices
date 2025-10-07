@@ -24,14 +24,12 @@ async function bootstrap() {
     origin: [
       process.env.API_GATEWAY_URL, // API Gateway
       process.env.USER_SERVICE_URL, // User Service
-      'http://localhost:4200', // Angular frontend
-      'http://localhost:3000', // React frontend
     ],
     credentials: true,
   });
 
   // Global prefix
-  app.setGlobalPrefix('posts');
+  // app.setGlobalPrefix('');
 
   // Swagger documentation
   if (configService.get('NODE_ENV') !== 'production') {
