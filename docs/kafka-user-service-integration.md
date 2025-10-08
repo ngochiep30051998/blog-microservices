@@ -250,7 +250,7 @@ async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     role: user.role,
   };
 
-  const access_token = this.jwtService.sign(payload);
+  const accessToken = this.jwtService.sign(payload);
 
   // 🎉 Publish login event
   try {
@@ -280,9 +280,9 @@ async login(loginDto: LoginDto): Promise<AuthResponseDto> {
 
   return {
     user: this.toResponseDto(user),
-    access_token,
-    token_type: 'Bearer',
-    expires_in: 24 * 60 * 60, // 24 hours in seconds
+    accessToken,
+    tokenType: 'Bearer',
+    expiresIn: 24 * 60 * 60, // 24 hours in seconds
   };
 }
 
@@ -460,7 +460,7 @@ LOGIN_RESPONSE=$(curl -s -X POST "http://localhost:3000/api/v1/users/login" \
 echo "Login response:"
 echo $LOGIN_RESPONSE | jq '.'
 
-TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.access_token')
+TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.accessToken')
 
 # Test profile update
 echo ""

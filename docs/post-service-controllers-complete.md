@@ -1505,7 +1505,7 @@ LOGIN_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/users/login" \
     "password": "AdminPass123!"
   }')
 
-TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.data.access_token')
+TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.data.accessToken')
 echo "✅ JWT Token obtained"
 
 # Step 2: Create a category
@@ -1658,7 +1658,7 @@ LOGIN_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/users/login" \
     "password": "AdminPass123!"
   }')
 
-TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.data.access_token')
+TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.data.accessToken')
 
 # Create a test image (1x1 pixel PNG)
 echo "📸 Creating test images..."

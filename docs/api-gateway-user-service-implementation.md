@@ -299,9 +299,9 @@ export interface JwtPayload {
 
 export interface AuthResponse {
   user: UserResponseDto;
-  access_token: string;
-  token_type: string;
-  expires_in: number;
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
 }
 
 @Injectable()
@@ -386,16 +386,16 @@ export class UserService {
       role: user.role,
     };
 
-    const access_token = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload);
 
     // Publish login event
     await this.publishUserEvent('user.login', user);
 
     return {
       user: this.toResponseDto(user),
-      access_token,
-      token_type: 'Bearer',
-      expires_in: 24 * 60 * 60, // 24 hours in seconds
+      accessToken,
+      tokenType: 'Bearer',
+      expiresIn: 24 * 60 * 60, // 24 hours in seconds
     };
   }
 
@@ -882,7 +882,7 @@ import { RolesGuard } from '../auth/roles.guard';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
         signOptions: { 
-          expiresIn: configService.get('JWT_EXPIRES_IN', '24h'),
+          expiresIn: configService.get('JWT_expiresIn', '24h'),
         },
       }),
       inject: [ConfigService],
@@ -1316,7 +1316,7 @@ import { AppService } from './app.service';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
         signOptions: { 
-          expiresIn: configService.get('JWT_EXPIRES_IN', '24h'),
+          expiresIn: configService.get('JWT_expiresIn', '24h'),
         },
       }),
       inject: [ConfigService],
@@ -1432,7 +1432,7 @@ ANALYTICS_SERVICE_URL=http://localhost:3005
 
 # JWT Configuration (nếu chưa có)
 JWT_SECRET=super-secret-jwt-key-2024-blog-microservices
-JWT_EXPIRES_IN=24h
+JWT_expiresIn=24h
 EOF
 ```
 

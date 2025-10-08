@@ -32,7 +32,7 @@ import { CategoryController } from '../controllers/category.controller';
         port: configService.get('POSTGRES_PORT', 5432),
         username: configService.get('POSTGRES_USER', 'blog_user'),
         password: configService.get('POSTGRES_PASSWORD', 'blog_password_2024'),
-        database: configService.get('POSTGRES_DB', 'blog_db') + '_posts',
+        database: configService.get('POSTGRES_DB_POST', 'blog_posts'),
         entities: [Post, Category, PostView],
         synchronize: configService.get('NODE_ENV') !== 'production',
         logging: configService.get('NODE_ENV') === 'development',

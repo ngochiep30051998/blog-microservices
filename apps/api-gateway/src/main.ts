@@ -85,7 +85,7 @@ This API serves as the gateway to our microservices architecture:
 ## Authentication
 Most endpoints require authentication using JWT Bearer tokens:
 1. Register a new account or login with existing credentials
-2. Use the returned access_token in the Authorization header
+2. Use the returned accessToken in the Authorization header
 3. Format: \`Authorization: Bearer <your-token>\`
 
 ## Rate Limiting

@@ -62,7 +62,7 @@ ANALYTICS_SERVICE_PORT=3005
 
 # JWT Configuration
 JWT_SECRET=super-secret-jwt-key-2024-blog-microservices
-JWT_EXPIRES_IN=24h
+JWT_expiresIn=24h
 
 # External Services
 SMTP_HOST=localhost

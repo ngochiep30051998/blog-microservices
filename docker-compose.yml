@@ -203,6 +203,17 @@ services:
       - '1025:1025' # SMTP
       - '8025:8025' # Web UI
 
+  api-gateway:
+    build:
+      context: ./docker/gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    ports:
+      - '9000:80'
+    networks:
+      - default
+
   # =================
   # MONITORING (Optional - chỉ cho development)
   # =================

@@ -6,11 +6,11 @@ export class AuthResponseDto {
   user!: UserResponseDto;
 
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
-  access_token!: string;
+  accessToken!: string;
 
   @ApiProperty({ example: 'Bearer' })
-  token_type!: string;
+  tokenType!: string;
 
   @ApiProperty({ example: 86400, description: 'Token expiration time in seconds' })
-  expires_in!: number;
+  expiresIn!: number;
 }

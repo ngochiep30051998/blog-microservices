@@ -153,7 +153,7 @@ import { RolesGuard } from './roles.guard';
       useFactory: (configService) => ({
         secret: configService.get('JWT_SECRET'),
         signOptions: { 
-          expiresIn: configService.get('JWT_EXPIRES_IN', '24h'),
+          expiresIn: configService.get('JWT_expiresIn', '24h'),
         },
       }),
       inject: ['ConfigService'],
@@ -404,13 +404,13 @@ export class AuthResponseDto {
   user: UserResponseDto;
 
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
-  access_token: string;
+  accessToken: string;
 
   @ApiProperty({ example: 'Bearer' })
-  token_type: string;
+  tokenType: string;
 
   @ApiProperty({ example: 86400, description: 'Token expiration time in seconds' })
-  expires_in: number;
+  expiresIn: number;
 }
 EOF
 ```
@@ -724,16 +724,16 @@ export class UserService {
       role: user.role,
     };
 
-    const access_token = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload);
 
     // Publish login event
     await this.publishUserEvent('user.login', user);
 
     return {
       user: this.toResponseDto(user),
-      access_token,
-      token_type: 'Bearer',
-      expires_in: 24 * 60 * 60, // 24 hours in seconds
+      accessToken,
+      tokenType: 'Bearer',
+      expiresIn: 24 * 60 * 60, // 24 hours in seconds
     };
   }
 
@@ -1566,7 +1566,7 @@ LOGIN_RESPONSE=$(curl -s -X POST ${API_URL}/users/login \
 echo "Login response: $LOGIN_RESPONSE"
 
 # Extract token
-TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$')
+TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"accessToken":"[^"]*' | grep -o '[^"]*$')
 
 if [ -z "$TOKEN" ]; then
     echo "❌ Failed to get auth token"

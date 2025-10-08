@@ -110,16 +110,16 @@ export class UserService {
       role: user.role,
     };
 
-    const access_token = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload);
 
     // Publish login event
     await this.publishUserEvent('user.login', user);
 
     return {
       user: this.toResponseDto(user),
-      access_token,
-      token_type: 'Bearer',
-      expires_in: 24 * 60 * 60, // 24 hours in seconds
+      accessToken,
+      tokenType: 'Bearer',
+      expiresIn: 24 * 60 * 60, // 24 hours in seconds
     };
   }
 

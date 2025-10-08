@@ -401,7 +401,7 @@ This API serves as the gateway to our microservices architecture:
 ## Authentication
 Most endpoints require authentication using JWT Bearer tokens:
 1. Register a new account or login with existing credentials
-2. Use the returned access_token in the Authorization header
+2. Use the returned accessToken in the Authorization header
 3. Format: \`Authorization: Bearer <your-token>\`
 
 ## Rate Limiting
@@ -1365,7 +1365,7 @@ LOGIN_RESPONSE=$(curl -s -X POST "${API_URL}/api/v1/users/login" \
 
 echo $LOGIN_RESPONSE | jq '.'
 
-TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.access_token')
+TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.accessToken')
 
 if [ "$TOKEN" != "null" ] && [ -n "$TOKEN" ]; then
     echo ""
