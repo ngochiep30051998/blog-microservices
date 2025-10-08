@@ -34,13 +34,6 @@ export class SwaggerConfigBuilder {
         },
         'api-key'
       )
-      .addTag('Authentication', 'User authentication and authorization')
-      .addTag('Users', 'User management operations')
-      .addTag('Posts', 'Blog post management')
-      .addTag('Comments', 'Comment management')
-      .addTag('Notifications', 'Notification services')
-      .addTag('Analytics', 'Analytics and reporting')
-      .addTag('Health', 'Health check endpoints')
       .setExternalDoc('Postman Collection', '/api/docs-json');
 
     if (config.serverUrl) {

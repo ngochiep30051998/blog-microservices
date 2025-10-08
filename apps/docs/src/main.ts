@@ -16,17 +16,14 @@ function mergeOpenApi(docs: OpenAPI[]): OpenAPI {
   const base: OpenAPI = {
     openapi: docs[0].openapi || '3.0.3',
     info: { title: 'Aggregated APIs', version: '1.0.0' },
-    servers: [],
+    servers: [{ url: 'http://localhost:9000' }],
     tags: [],
     paths: {},
     components: {},
   };
 
   for (const doc of docs) {
-    // servers
-    if (Array.isArray(doc.servers)) {
-      base.servers.push(...doc.servers);
-    }
+    // Skip merging servers to keep only the base server (localhost:9000)
     // tags
     if (Array.isArray(doc.tags)) {
       const existing = new Set(base.tags.map((t: any) => t.name));
@@ -70,18 +67,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Fetch hai service
-  const [doc1, doc2] = await Promise.all([
+  const res = await Promise.allSettled([
     fetchOpenApi('http://localhost:9001/docs-json'),
     fetchOpenApi('http://localhost:9002/docs-json'),
-  ]);
+  ]).then(results => results.filter(result => result.status === 'fulfilled')).then(results => results.map((result: any) => result.value));
 
-  aggregatedDoc = mergeOpenApi([doc1, doc2]);
+  aggregatedDoc = mergeOpenApi(res);
 
-  // Mount Swagger UI sử dụng jsonDocumentUrl đọc từ /swagger/json
-  const options = new DocumentBuilder()
-    .setTitle('Aggregated APIs')
-    .setVersion('1.0.0')
-    .build();
 
   // Dùng documentFactory dạng “placeholder”; UI sẽ lấy JSON từ /swagger/json
   const documentFactory = () => aggregatedDoc;

@@ -21,7 +21,6 @@ async function bootstrap() {
     origin: ['http://localhost:9000', 'http://localhost:9001'],
     credentials: true,
   });
-
   // Swagger setup for development
   if (configService.get('NODE_ENV') !== 'production') {
     const swaggerConfig = SwaggerConfigBuilder.createConfig({
