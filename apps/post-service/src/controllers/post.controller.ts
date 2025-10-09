@@ -42,13 +42,13 @@ import { PostService } from '../services/post.service';
 import { PostStatus } from '../entities/post.entity';
 
 @ApiTags('Posts')
-@Controller('posts')
+@Controller('')
 export class PostController {
   constructor(
     private readonly postService: PostService,
   ) {}
 
-  @Post()
+  @Post('create')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @HttpCode(HttpStatus.CREATED)
@@ -99,7 +99,7 @@ Use the Upload Service endpoints first, then reference the file URLs in your pos
     });
   }
 
-  @Get()
+  @Get('list')
   @ApiOperation({ 
     summary: 'Get all posts with filtering and pagination',
     description: `
@@ -134,7 +134,6 @@ Retrieve paginated list of posts with advanced filtering options.
   @ApiQuery({ name: 'tag', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'featured', required: false, type: Boolean })
-  @ApiQuery({ name: 'language', required: false, type: String, example: 'en' })
   @ApiPaginatedResponse(PostListItemDto, 'Posts retrieved successfully')
   async findAll(
     @Query() paginationDto: PaginationDto,
@@ -144,7 +143,6 @@ Retrieve paginated list of posts with advanced filtering options.
     @Query('tag') tag?: string,
     @Query('search') search?: string,
     @Query('featured') featured?: boolean,
-    @Query('language') language?: string
   ): Promise<SuccessResponseDto<any>> {
     const filters = {
       status,
@@ -153,7 +151,6 @@ Retrieve paginated list of posts with advanced filtering options.
       tag,
       search,
       featured,
-      language,
     };
 
     const result = await this.postService.findAll(paginationDto, filters);
