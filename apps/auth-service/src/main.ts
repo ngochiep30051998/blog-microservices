@@ -18,8 +18,10 @@ async function bootstrap() {
 
   // CORS for development
   app.enableCors({
-    origin: ['http://localhost:9000', 'http://localhost:9001'],
+    origin: configService.get('CORS_ORIGINS', 'http://localhost:9000,http://localhost:9001').split(','),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   });
   // Swagger setup for development
   if (configService.get('NODE_ENV') !== 'production') {
