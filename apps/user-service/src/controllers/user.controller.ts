@@ -23,17 +23,13 @@ import {
 // Shared imports
 import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@blog/shared/auth';
 import {
-  CreateUserDto,
   UpdateUserDto,
-  LoginDto,
   ChangePasswordDto,
   UserResponseDto,
-  AuthResponseDto,
   PaginationDto,
   SuccessResponseDto,
   ResponseBuilder,
   ApiSuccessResponse,
-  ApiCreatedResponse,
   ApiUpdatedResponse,
   ApiDeletedResponse,
   ApiPaginatedResponse,
@@ -48,34 +44,7 @@ import { UserService } from '../services/user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
-    summary: 'Register a new user',
-    description: 'Create a new user account with email and username validation'
-  })
-  @ApiCreatedResponse(UserResponseDto, 'User account created successfully')
-  async register(@Body() createUserDto: CreateUserDto): Promise<SuccessResponseDto<UserResponseDto>> {
-    const user = await this.userService.create(createUserDto);
-    
-    return ResponseBuilder.created(user, 'User account created successfully', {
-      welcomeEmailSent: true,
-      accountActivationRequired: false,
-    });
-  }
 
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'User login',
-    description: 'Authenticate user and return JWT token with user profile'
-  })
-  @ApiSuccessResponse(AuthResponseDto, 'Login successful')
-  async login(@Body() loginDto: LoginDto): Promise<SuccessResponseDto<AuthResponseDto>> {
-    const authResult = await this.userService.login(loginDto);
-    
-    return ResponseBuilder.loginSuccess(authResult, 'Login successful');
-  }
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
