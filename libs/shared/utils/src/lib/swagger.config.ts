@@ -43,11 +43,12 @@ export class SwaggerConfigBuilder {
     return builder.build();
   }
 
-  static createDocumentOptions(): SwaggerDocumentOptions {
+  static createDocumentOptions(extraModels: Function[] = []): SwaggerDocumentOptions {
     return {
       operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
       deepScanRoutes: true,
       ignoreGlobalPrefix: false,
+      extraModels: extraModels,
     };
   }
 

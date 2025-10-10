@@ -4,6 +4,13 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app/app.module';
 import { SwaggerConfigBuilder } from '@blog/shared/utils';
+import {
+  UserResponseDto,
+  UpdateUserDto,
+  ChangePasswordDto,
+  SuccessResponseDto,
+  PaginationDto,
+} from '@blog/shared/dto';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,18 +33,36 @@ async function bootstrap() {
   // Swagger setup for development
   if (configService.get('NODE_ENV') !== 'production') {
     const swaggerConfig = SwaggerConfigBuilder.createConfig({
-      title: 'Auth Service API',
+      title: 'User Service API',
       description: `
+        User Service API - Handles user management, profiles, and user-related operations.
+        
+        ## Authentication
+        This API uses JWT Bearer tokens for authentication. Include your token in the Authorization header:
+        \`Authorization: Bearer <your-jwt-token>\`
+        
+        ## Features
+        - User profile management
+        - User search and listing (Admin only)
+        - Password management
+        - Account operations
       `,
       version: '1.0.0',
       serverUrl: `http://localhost:${configService.get('API_GATEWAY_PORT', 9007)}`,
-      serverDescription: 'Auth Service Development Server',
+      serverDescription: 'User Service Development Server',
     });
 
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    const documentOptions = SwaggerConfigBuilder.createDocumentOptions([
+      UserResponseDto,
+      UpdateUserDto,
+      ChangePasswordDto,
+      SuccessResponseDto,
+      PaginationDto,
+    ]);
+    const document = SwaggerModule.createDocument(app, swaggerConfig, documentOptions);
     SwaggerModule.setup('docs', app, document, SwaggerConfigBuilder.getSwaggerUIOptions());
 
-    console.log(`📚 Auth Service Swagger: http://localhost:${configService.get('USER_SERVICE_PORT', 9007)}`);
+    console.log(`📚 User Service Swagger: http://localhost:${configService.get('USER_SERVICE_PORT', 9007)}/docs`);
   }
 
   const port = configService.get('USER_SERVICE_PORT', 9007);
