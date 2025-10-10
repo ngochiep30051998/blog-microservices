@@ -45,7 +45,8 @@ async function bootstrap() {
     const documentFactory = () => SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, documentFactory, {
       explorer: true,
-      urls: [
+      swaggerOptions:{
+        urls: [
         {
           name: '1. User API',
           url: 'http://localhost:9001/docs-json',
@@ -59,6 +60,7 @@ async function bootstrap() {
           url: 'http://localhost:9007/docs-json',
         },
       ],
+      },
       jsonDocumentUrl: '/api/swagger.json',
     });
 
