@@ -1,7 +1,6 @@
-import { applyDecorators, Type } from '@nestjs/common';
+import { Type } from '@nestjs/common';
 import { ApiResponse, getSchemaPath } from '@nestjs/swagger';
 import { SuccessResponseDto } from './success-response.dto';
-import { PaginatedResponseDto } from './paginated-response.dto';
 
 /**
  * Swagger decorator for success response with data
@@ -16,7 +15,6 @@ export const ApiSuccessResponse = <TModel extends Type<any>>(
     description,
     schema: {
       allOf: [
-        { $ref: getSchemaPath(SuccessResponseDto) },
         {
           properties: {
             data: { $ref: getSchemaPath(model) },
