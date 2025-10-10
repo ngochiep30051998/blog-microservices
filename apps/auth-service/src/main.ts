@@ -37,7 +37,7 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('docs', app, document, SwaggerConfigBuilder.getSwaggerUIOptions());
 
-    console.log(`📚 Auth Service Swagger: http://localhost:${configService.get('AUTH_SERVICE_PORT', 9007)}/docs`);
+    console.log(`📚 Auth Service Swagger: http://localhost:${configService.get('AUTH_SERVICE_PORT', 9007)}`);
   }
 
   const port = configService.get('AUTH_SERVICE_PORT', 9007);

@@ -16,6 +16,7 @@ async function bootstrap() {
     transform: true,
   }));
 
+  // CORS for development
   app.enableCors({
     origin: configService.get('CORS_ORIGINS').split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -25,55 +26,24 @@ async function bootstrap() {
   // Swagger setup for development
   if (configService.get('NODE_ENV') !== 'production') {
     const swaggerConfig = SwaggerConfigBuilder.createConfig({
-      title: 'User Service API',
+      title: 'Auth Service API',
       description: `
-# User Service - Blog Microservices
-
-This service handles all user-related operations including:
-
-## Features
-- 🔐 User registration and authentication
-- 👤 Profile management
-- 🔑 Password management
-- 👥 Role-based access control
-- 📧 Email verification (future)
-- 🔒 Account security features
-
-## Authentication
-This service generates JWT tokens for authentication:
-- Register new users
-- Login existing users  
-- Manage user profiles
-- Handle password changes
-
-## Events Published
-- \`user.created\` - When a new user registers
-- \`user.updated\` - When user profile is updated
-- \`user.login\` - When user logs in
-- \`user.password_changed\` - When password is changed
-- \`user.deactivated\` - When account is deactivated
-
-## Database
-- PostgreSQL with TypeORM
-- UUID primary keys
-- Encrypted passwords with bcrypt
-- Indexed email and username fields
       `,
       version: '1.0.0',
-      serverUrl: `http://localhost:${configService.get('USER_SERVICE_PORT', 3001)}`,
-      serverDescription: 'User Service Development Server',
+      serverUrl: `http://localhost:${configService.get('API_GATEWAY_PORT', 9007)}`,
+      serverDescription: 'Auth Service Development Server',
     });
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('docs', app, document, SwaggerConfigBuilder.getSwaggerUIOptions());
 
-    console.log(`📚 User Service Swagger: http://localhost:${configService.get('USER_SERVICE_PORT', 3001)}/docs`);
+    console.log(`📚 Auth Service Swagger: http://localhost:${configService.get('USER_SERVICE_PORT', 9007)}`);
   }
 
-  const port = configService.get('USER_SERVICE_PORT', 3001);
+  const port = configService.get('USER_SERVICE_PORT', 9007);
   await app.listen(port);
   
-  console.log(`👤 User Service running on port ${port}`);
+  console.log(`👤 Auth Service running on port ${port}`);
 }
 
 bootstrap();
