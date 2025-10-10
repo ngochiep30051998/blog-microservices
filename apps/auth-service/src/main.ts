@@ -18,7 +18,7 @@ async function bootstrap() {
 
   // CORS for development
   app.enableCors({
-    origin: configService.get('CORS_ORIGINS', 'http://localhost:9000,http://localhost:9001').split(','),
+    origin: configService.get('CORS_ORIGINS').split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
@@ -30,7 +30,7 @@ async function bootstrap() {
       description: `
       `,
       version: '1.0.0',
-      serverUrl: `http://localhost:${configService.get('AUTH_SERVICE_PORT', 9007)}`,
+      serverUrl: `http://localhost:${configService.get('API_GATEWAY_PORT', 9007)}`,
       serverDescription: 'Auth Service Development Server',
     });
 

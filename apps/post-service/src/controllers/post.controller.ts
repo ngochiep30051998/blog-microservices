@@ -42,7 +42,7 @@ import { PostService } from '../services/post.service';
 import { PostStatus } from '../entities/post.entity';
 
 @ApiTags('Posts')
-@Controller('')
+@Controller('posts')
 export class PostController {
   constructor(
     private readonly postService: PostService,

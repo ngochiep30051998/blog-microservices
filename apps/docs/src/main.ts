@@ -1,86 +1,75 @@
-// main.ts
 import { NestFactory } from '@nestjs/core';
-import { Module, Controller, Get } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import fetch from 'node-fetch';
-
-type OpenAPI = any;
-
-async function fetchOpenApi(url: string): Promise<OpenAPI> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Fetch failed ${url}: ${res.status}`);
-  return res.json();
-}
-
-function mergeOpenApi(docs: OpenAPI[]): OpenAPI {
-  const base: OpenAPI = {
-    openapi: docs[0].openapi || '3.0.3',
-    info: { title: 'Aggregated APIs', version: '1.0.0' },
-    servers: [{ url: 'http://localhost:9000' }],
-    tags: [],
-    paths: {},
-    components: {},
-  };
-
-  for (const doc of docs) {
-    // Skip merging servers to keep only the base server (localhost:9000)
-    // tags
-    if (Array.isArray(doc.tags)) {
-      const existing = new Set(base.tags.map((t: any) => t.name));
-      for (const t of doc.tags) {
-        if (!existing.has(t.name)) base.tags.push(t);
-      }
-    }
-    // paths
-    if (doc.paths) {
-      for (const [p, val] of Object.entries(doc.paths)) {
-        if (!base.paths[p]) base.paths[p] = {};
-        Object.assign(base.paths[p], val);
-      }
-    }
-    // components
-    if (doc.components) {
-      base.components = base.components || {};
-      for (const [k, section] of Object.entries(doc.components)) {
-        base.components[k] = base.components[k] || {};
-        Object.assign(base.components[k], section);
-      }
-    }
-  }
-  return base;
-}
-
-let aggregatedDoc: OpenAPI;
-
-@Controller()
-class DocsController {
-  @Get('swagger/json')
-  getJson() {
-    return aggregatedDoc;
-  }
-}
-
-@Module({ controllers: [DocsController] })
-class AppModule {}
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AppModule } from './app/app.module';
+import { SwaggerConfigBuilder } from '@blog/shared/utils';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
-  // Fetch hai service
-  const res = await Promise.allSettled([
-    fetchOpenApi('http://localhost:9001/docs-json'),
-    fetchOpenApi('http://localhost:9002/docs-json'),
-  ]).then(results => results.filter(result => result.status === 'fulfilled')).then(results => results.map((result: any) => result.value));
+  // Global validation pipe
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }));
 
-  aggregatedDoc = mergeOpenApi(res);
-
-
-  // Dùng documentFactory dạng “placeholder”; UI sẽ lấy JSON từ /swagger/json
-  const documentFactory = () => aggregatedDoc;
-  SwaggerModule.setup('docs', app, documentFactory, {
-    jsonDocumentUrl: 'swagger/json',
+  // CORS for development
+  app.enableCors({
+    origin: configService.get('CORS_ORIGINS').split(','),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   });
+  // Swagger setup for development
+  if (configService.get('NODE_ENV') !== 'production') {
 
-  await app.listen(9009);
+    const config = new DocumentBuilder()
+      .setTitle('Blog microservices - Docs')
+      .setVersion('1.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'JWT Authentication',
+          description: 'Enter your JWT token',
+          in: 'header',
+        },
+        'JWT-auth'
+      )
+      .setExternalDoc('Postman Collection', '/api/docs-json')
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, documentFactory, {
+      explorer: true,
+      urls: [
+        {
+          name: '1. User API',
+          url: 'http://localhost:9001/docs-json',
+        },
+        {
+          name: '2. Posts API',
+          url: 'http://localhost:9002/docs-json',
+        },
+        {
+          name: '3. Auth API',
+          url: 'http://localhost:9007/docs-json',
+        },
+      ],
+      jsonDocumentUrl: '/api/swagger.json',
+    });
+
+
+    console.log(`📚 Docs Swagger: http://localhost:${configService.get('DOCS_SERVICE_PORT', 9008)}`);
+  }
+
+  const port = configService.get('DOCS_SERVICE_PORT', 9008);
+  await app.listen(port);
+
+  console.log(`👤 Docs running on port ${port}`);
 }
+
 bootstrap();

@@ -21,11 +21,10 @@ async function bootstrap() {
 
   // CORS for development
   app.enableCors({
-    origin: [
-      process.env.API_GATEWAY_URL, // API Gateway
-      process.env.USER_SERVICE_URL, // User Service
-    ],
+    origin: configService.get('CORS_ORIGINS').split(','),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   });
 
   // Global prefix
@@ -42,7 +41,7 @@ async function bootstrap() {
         bearerFormat: 'JWT',
         description: 'Enter JWT token from User Service login',
       })
-      .addServer(`http://localhost:${configService.get('API_GATEWAY_PORT', 9000)}/posts`, 'API gateway Server')
+      .addServer(`http://localhost:${configService.get('API_GATEWAY_PORT', 9000)}`, 'API gateway Server')
       .addTag('Posts', 'Blog post CRUD operations with rich content management')
       .addTag('Categories', 'Hierarchical category management for post organization')
       .build();
