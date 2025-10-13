@@ -36,14 +36,14 @@ import {
 import { CategoryService } from '../services/category.service';
 
 @ApiTags('Categories')
-@Controller('categories')
+@Controller('posts/categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiBearerAuth('JWT-auth')
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
     summary: 'Create new category',

@@ -50,7 +50,7 @@ import { CategoryController } from '../controllers/category.controller';
     AuthModule,
   ],
 
-  controllers: [PostController, CategoryController],
+  controllers: [CategoryController, PostController],
 
   providers: [
     PostService,
