@@ -119,16 +119,45 @@ export class CategoryService {
 
   /**
    * Get all categories with hierarchy
+   * Returns only root categories with their children loaded
+   * to avoid duplicates in the result array
+   * Uses single query and builds tree in memory for optimal performance
    */
   async findAll(): Promise<Category[]> {
-    return await this.categoryRepository.find({
+    // Single query to get ALL categories at once
+    const allCategories = await this.categoryRepository.find({
       order: {
         level: 'ASC',
         sortOrder: 'ASC',
         name: 'ASC',
       },
-      relations: ['parent', 'children'],
     });
+
+    // Build tree structure in memory
+    const categoryMap = new Map<string, Category>();
+    const rootCategories: Category[] = [];
+
+    // First pass: create map and initialize children arrays
+    allCategories.forEach(category => {
+      category.children = []; // Initialize empty children array
+      categoryMap.set(category.id, category);
+    });
+
+    // Second pass: build parent-child relationships
+    allCategories.forEach(category => {
+      if (!category.parentId) {
+        // Root category
+        rootCategories.push(category);
+      } else {
+        // Child category - add to parent's children array
+        const parent = categoryMap.get(category.parentId);
+        if (parent) {
+          parent.children.push(category);
+        }
+      }
+    });
+
+    return rootCategories;
   }
 
   /**
