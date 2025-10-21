@@ -59,6 +59,10 @@ async function bootstrap() {
           name: '3. Auth API',
           url: 'http://localhost:9007/docs-json',
         },
+        {
+          name: '4. Files API',
+          url: 'http://localhost:9006/docs-json',
+        },
       ],
       },
       jsonDocumentUrl: '/api/swagger.json',

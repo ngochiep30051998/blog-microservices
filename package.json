@@ -25,7 +25,8 @@
     "dep-graph": "nx graph",
     "affected:build": "nx affected:build",
     "affected:test": "nx affected:test",
-    "affected:lint": "nx affected:lint"
+    "affected:lint": "nx affected:lint",
+    "dev":"nx run-many --target=serve --projects=auth-service,user-service,post-service,docs,files-service"
   },
   "keywords": [
     "microservices",
